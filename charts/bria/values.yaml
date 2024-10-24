@@ -1,0 +1,56 @@
+fullnameOverride: ""
+nameOverride: ""
+bria:
+  devDaemon:
+    enabled: false
+    bitcoindSignerEndpoint: https://bitcoind-onchain.default.svc.cluster.local:18543
+  resources: {}
+  tracing:
+    host: localhost
+    port: 4317
+    serviceName: bria-dev
+  app:
+    blockchain:
+      network: regtest
+      electrumUrl: fulcrum.default.svc.cluster.local
+    fees:
+      mempoolSpace:
+        url: https://mempool.space
+        numberOfRetries: 3
+    security:
+      blockedAddresses: []
+    deprecatedEncryptionKey:
+      nonce: null
+      key: null
+  db:
+    poolSize: 20
+  admin:
+    service:
+      type: ClusterIP
+      port: 2743
+  api:
+    service:
+      type: ClusterIP
+      port: 2742
+      staticIP: ""
+      annotations: {}
+  labels: {}
+  image:
+    repository: us.gcr.io/galoy-org/bria
+    digest: "sha256:a44dffa2f0211b87ac9ef25e1c021d5411fb1a0b65b54c516f3fee18be0f5e05" # METADATA:: repository=https://github.com/GaloyMoney/bria;commit_ref=938c2b0;app=bria;
+    git_ref: "55654e2"
+  replicas: 2
+  annotations:
+  secrets:
+    create: true
+    pgCon: ""
+    signerEncryptionKey: ""
+    annotations:
+postgresql:
+  enabled: true
+  auth:
+    enablePostgresUser: false
+    username: bria
+    password: bria
+    database: bria
+resources: {}
