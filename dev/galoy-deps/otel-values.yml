@@ -1,0 +1,8 @@
+cert-manager:
+  enabled: false
+ingress-nginx:
+  enabled: false
+strimzi-kafka-operator:
+  enabled: false
+kubemonkey:
+  enabled: false

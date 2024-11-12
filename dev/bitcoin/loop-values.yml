@@ -1,0 +1,5 @@
+global:
+  network: regtest
+
+persistence:
+  enabled: false
