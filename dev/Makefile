@@ -10,6 +10,12 @@ delete-cluster:
 
 all: create-cluster
 
+run-bitcoin-smoketest:
+	kubectl -n galoy-dev-smoketest exec smoketest -- bash -c "cd /charts/ci/tasks && \
+		CHART=bitcoind ./dev-smoketest-settings.sh && \
+		./bitcoind-smoketest.sh regtest && \
+		rm -rf smoketest-settings"
+
 helm-dep-updates:
 	for dir in $$(ls ../charts); do \
 		cd ../charts/$$dir && helm dependency update && cd -; \
