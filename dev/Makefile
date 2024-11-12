@@ -10,6 +10,24 @@ delete-cluster:
 
 all: create-cluster init deploy-services deploy
 
+run-galoy-smoketest:
+	kubectl -n galoy-dev-smoketest exec smoketest -- bash -c "cd /charts/ci/tasks && \
+    CHART=galoy ./dev-smoketest-settings.sh && \
+    ./galoy-smoketest.sh && \
+    rm -rf smoketest-settings response.json"
+
+run-bitcoin-smoketest:
+	kubectl -n galoy-dev-smoketest exec smoketest -- bash -c "cd /charts/ci/tasks && \
+		CHART=bitcoind ./dev-smoketest-settings.sh && \
+		./bitcoind-smoketest.sh regtest && \
+		rm -rf smoketest-settings"
+
+run-kafka-connect-smoketest:
+	kubectl -n galoy-dev-smoketest exec smoketest -- bash -c "cd /charts/ci/tasks && \
+    CHART=kafka-connect ./dev-smoketest-settings.sh && \
+    ./kafka-connect-smoketest.sh && \
+    rm -rf smoketest-settings response.json"
+
 helm-dep-updates:
 	for dir in $$(ls ../charts); do \
 		cd ../charts/$$dir && helm dependency update && cd -; \

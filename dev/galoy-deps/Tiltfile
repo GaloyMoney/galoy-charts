@@ -15,30 +15,30 @@ namespace_create(ingress_namespace)
 # TODO: decide how to label the ingress namespace
 # k8s_resource(workload="cert-manager?", objects=["galoy-dev-ingress:namespace"])
 
-#helm_release(
-#  '../../charts/galoy-deps',
-#  name='cert-manager',
-#  namespace=ingress_namespace,
-#  values=['./cert-manager-values.yml'],
-#)
+helm_release(
+  '../../charts/galoy-deps',
+  name='cert-manager',
+  namespace=ingress_namespace,
+  values=['./cert-manager-values.yml'],
+)
 
-#helm_release(
-#  '../../charts/galoy-deps',
-#  name='ingress-nginx',
-#  namespace=ingress_namespace,
-#  values=['./ingress-nginx-values.yml'],
-#)
+helm_release(
+  '../../charts/galoy-deps',
+  name='ingress-nginx',
+  namespace=ingress_namespace,
+  values=['./ingress-nginx-values.yml'],
+)
 
 ## opentelemetry-collector
 
 namespace_create(otel_namespace)
 
-#helm_release(
-#  '../../charts/galoy-deps',
-#  name='opentelemetry-collector',
-#  namespace=otel_namespace,
-#  values=['./otel-values.yml'],
-#)
+helm_release(
+  '../../charts/galoy-deps',
+  name='opentelemetry-collector',
+  namespace=otel_namespace,
+  values=['./otel-values.yml'],
+)
 
 # do we need kubemonkey in local dev?
 

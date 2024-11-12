@@ -30,82 +30,6 @@ Currently successfully brings up charts - no guarantee that everything is workin
   tilt up
   ```
 
-### Test
-
-#### Forward the ingress nginx controller port:
-* Run and keep open:
-  ```
-  kubectl -n galoy-dev-ingress port-forward --address 0.0.0.0 svc/ingress-nginx-controller 4002:80
-  ```
-#### Test the galoy-api
-
-1. get session token
-    ```
-    curl -ksS 'https://localhost:8080/graphql' -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary '{"query":"mutation login($input: UserLoginInput!) { userLogin(input: $input) { authToken } }","variables":{"input":{"phone":"+59981730222","code":"111111"}}}' | jq '.data.userLogin.authToken'
-    ```
-
-    Example result:
-    ```
-    "BxTc70FW7gL5MEueAFcxGE08nbWWsytE"
-    ```
-2. query an authenticated endpoint (fill out the `session_token` from above)
-    ```
-    session_token="BxTc70FW7gL5MEueAFcxGE08nbWWsytE"
-    curl -k 'http://localhost:4002/graphql' -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Authorization: bearer ${session_token}" --data-binary '{"query": "{ me { phone } }" }'
-    ```
-    Expected result:
-    ```
-    {"data":{"me":{"phone":"+16505554321"}}}
-    ```
-#### Test the graphql-admin api
-
-1. get session token
-    ```
-    curl -ksS 'http://localhost:4002/admin/graphql' -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary '{"query":"mutation login($input: UserLoginInput!) { userLogin(input: $input) { authToken } }","variables":{"input":{"phone":"+16505554321","code":"000000"}}}' | jq '.data.userLogin.authToken'
-    ```
-
-    Example result:
-    ```
-    "Beo2lGQZO4nZKzIyZRlVFIQ6jAeo9bNu"
-    ```
-
-#### Test the admin panel
-
-1. port forward the web wallet on 3001
-    ```
-    kubectl -n galoy-dev-addons port-forward  --address 0.0.0.0 svc/admin-panel 3001:3000
-    ```
-2. open http://localhost:3001
-
-## Grafana access
--
-  ```
-  env=galoy-dev
-
-  the user is: `admin` (https://github.com/bitnami/charts/blob/main/bitnami/grafana/values.yaml#L76)
-
-  # get the password
-  k -n ${env}-monitoring get secrets monitoring-grafana -o jsonpath='{.data.admin-password}' | base64 -d; echo
-
-  # forward the port from the pod
-  k -n ${env}-monitoring port-forward svc/monitoring-grafana 3000:80
-
-  # access Grafana on http://localhost:3000
-  ```
-
-## Port access from a remote computer
--
-  ```
-  # port forward with ssh
-  localport=3000      # chosen port on the desktop with the web browser
-  user=k3d            # remote user (example)
-  host=192.168.3.170  # the IP address of the server (example)
-
-  ssh -L $localport:127.0.0.1:3000 $user@$host
-
-  # access the service on http://localhost:$localport
-  ```
-
 ## Smoketests
 ### run the automated run-galoy-smoketest used in github actions
   ```
@@ -141,3 +65,4 @@ Currently successfully brings up charts - no guarantee that everything is workin
     -H 'Accept: application/json' --data-binary \
     "{\"query\":\"mutation login(\$input: UserLoginInput\!) { userLogin(input: \$input) { authToken } }\",\"variables\":{\"input\":{\"phone\":\"${phone}\",\"code\":\"${code}\"}}}" \
   ```
+##
