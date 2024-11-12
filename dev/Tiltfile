@@ -1,8 +1,3 @@
 include('./galoy-deps/Tiltfile')
 include('./bitcoin/Tiltfile')
-# include('./monitoring/Tiltfile')
-# include('./galoy/Tiltfile')
 include('./cala/Tiltfile')
-# include('./addons/Tiltfile')
-# include('./kafka-connect/Tiltfile')
-# include('./smoketest/Tiltfile')
