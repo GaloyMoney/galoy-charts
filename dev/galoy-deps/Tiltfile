@@ -4,23 +4,9 @@ load('../common/Tiltfile', 'copy_secret', 'helm_release')
 update_settings(k8s_upsert_timeout_secs=120)
 
 name_prefix = "galoy-dev"
-kafka_namespace = "{}-kafka".format(name_prefix)
 ingress_namespace = "{}-ingress".format(name_prefix)
 otel_namespace = "{}-otel".format(name_prefix)
 kubemonkey_namespace = "{}-kubemonkey".format(name_prefix)
-
-namespace_create(kafka_namespace)
-
-# Attaching the namespace to the workload means that the namespace will be deleted when the workload is deleted
-# k8s_resource(workload="kafka-operator", objects=["galoy-dev-kafka:namespace"])
-
-#helm_release( '../../charts/galoy-deps',
-#  name='kafka',
-#  namespace=kafka_namespace,
-#  values=['./kafka-values.yml'],
-#  dependency_build=True,
-#  add_repos=True
-#)
 
 ## cert-manager and ingress-nginx
 

@@ -59,37 +59,6 @@ local_resource(
   resource_deps=["bitcoind-onchain", "bitcoind"]
 )
 
-# helm_resource(
-#   name="lnd1",
-#   chart="../../charts/lnd",
-#   namespace=bitcoin_namespace,
-#   flags=[
-#     '--values=./lnd-regtest-values.yml',
-#   ],
-#   labels='bitcoin'
-#   # resource_deps=["bitcoind-block-generator"],
-# )
-
-# TODO: uncomment fulcrum when we actually use it
-# helm_resource(
-#   name="fulcrum",
-#   chart="../../charts/fulcrum",
-#   namespace=bitcoin_namespace,
-#   flags=[
-#     '--values=./fulcrum-regtest-values.yml',
-#   ],
-#   labels="bitcoin"
-# )
-
-# k8s_yaml(secret_from_dict(
-#   name='fulcrum-smoketest',
-#   namespace=bitcoin_namespace,
-#   inputs={
-#     'fulcrum_endpoint': 'fulcrum.{}.svc.cluster.local'.format(bitcoin_namespace),
-#     'fulcrum_stats_port': 8080
-#   },
-# ))
-
 k8s_yaml(secret_from_dict(
   name='bria-smoketest',
   namespace=bitcoin_namespace,
@@ -118,28 +87,6 @@ helm_release(
 
 k8s_resource(workload='bria', labels='bitcoin')
 
-# TODO: uncomment mempool when we actually use it
-# helm_resource(
-#   name="mempool",
-#   chart="../../charts/mempool",
-#   namespace=bitcoin_namespace,
-#   flags=[
-#     '--values=./mempool-regtest-values.yml',
-#   ],
-#   labels="bitcoin"
-# )
-
-# k8s_yaml(secret_from_dict(
-#   name='mempool-smoketest',
-#   namespace=smoketest_namespace,
-#   inputs={
-#     'mempool_endpoint': 'mempool.{}.svc.cluster.local'.format(bitcoin_namespace),
-#     'mempool_port': 8999
-#   },
-# ))
-
-# k8s_resource(workload='mempool', labels='bitcoin')
-
 # create bitcoind smoketest secret from snippet above
 k8s_yaml(secret_from_dict(
   name='bitcoind-smoketest',
@@ -151,15 +98,5 @@ k8s_yaml(secret_from_dict(
     'bitcoind_user': 'rpcuser',
     'bitcoind_onchain_rpcpassword': bitcoind_rpcpassword,
     'bitcoind_onchain_endpoint': 'bitcoind.{}.svc.cluster.local'.format(bitcoin_namespace),
-  }
-))
-
-# create lnd smoketest secret from snippet above
-k8s_yaml(secret_from_dict(
-  name='lnd-smoketest',
-  namespace=smoketest_namespace,
-  inputs={
-    'lnd_api_endpoint': 'lnd1.{}.svc.cluster.local'.format(bitcoin_namespace),
-    'lnd_p2p_endpoint': 'lnd1-p2p.{}.svc.cluster.local'.format(bitcoin_namespace),
   }
 ))
