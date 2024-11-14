@@ -1,0 +1,230 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("pipeline-fragments.lib.yml",
+#@   "chain_dl_image",
+#@   "testflight_job",
+#@   "bump_in_deployments_job",
+#@   "chart_repo_resource",
+#@   "testflight_tf_resource",
+#@   "testflight_job_name",
+#@   "bump_in_deployments_job_name",
+#@   "chart_resource_name",
+#@   "slack_resource",
+#@   "bitcoin_charts",
+#@   "cala_charts",
+#@   "task_image_config",
+#@   "repo_resource",
+#@   "build_task")
+
+#@ def galoy_chart_vars():
+testflight_backups_creds: #@ data.values.testflight_backups_creds
+smoketest_kubeconfig: #@ data.values.staging_smoketest_kubeconfig
+#@ end
+
+#@ def galoy_deps_chart_vars():
+smoketest_kubeconfig: #@ data.values.staging_smoketest_kubeconfig
+#@ end
+
+groups:
+- name: galoy
+  jobs:
+  - galoy-testflight
+  - bump-galoy-in-deployments
+- name: bitcoin
+  jobs:
+#@ for chart in bitcoin_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+- name: cala
+  jobs:
+#@ for chart in cala_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+- name: all
+  jobs:
+  - galoy-testflight
+  - bump-galoy-in-deployments
+#@ for chart in cala_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+#@ for chart in bitcoin_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+#@ for chart in addons_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+- name: galoy-deps
+  jobs:
+  - galoy-deps-testflight
+  - bump-galoy-deps-in-deployments
+- name: images
+  jobs:
+  - build-chain-dl-image
+
+jobs:
+#@ for chart in cala_charts:
+- #@ testflight_job(chart, "cala")
+- #@ bump_in_deployments_job(chart)
+#@ end
+#@ for chart in bitcoin_charts:
+- #@ testflight_job(chart, "bitcoin")
+- #@ bump_in_deployments_job(chart)
+#@ end
+- #@ testflight_job("galoy", "galoy", galoy_chart_vars())
+- #@ bump_in_deployments_job("galoy")
+- #@ bump_in_deployments_job("stablesats")
+- #@ bump_in_deployments_job("galoy-deps")
+
+- name: build-chain-dl-image
+  serial: true
+  plan:
+  - {get: chain-dl-image-def, trigger: true}
+  - #@ build_task("chain-dl-image-def", "chain-dl-image-def/images/chain-dl")
+  - put: chain-dl-image
+    params:
+      image: image/image.tar
+
+- name: build-lnd-sidecar-image
+  serial: true
+  plan:
+  - {get: lnd-sidecar-image-def, trigger: true}
+  - #@ build_task("lnd-sidecar-image-def", "lnd-sidecar-image-def/images/lnd-sidecar")
+  - put: lnd-sidecar-image
+    params:
+      image: image/image.tar
+
+- name: bump-lnd-sidecar-image-in-chart
+  plan:
+  - in_parallel:
+    - get: lnd-sidecar-image
+      trigger: true
+      passed: [build-lnd-sidecar-image]
+      params: { skip_download: true }
+    - get: lnd-sidecar-image-def
+      trigger: true
+      passed: [build-lnd-sidecar-image]
+    - get: charts-repo
+      params: { skip_download: true }
+    - get: pipeline-tasks
+  - task: bump-image-digest-in-values
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: lnd-sidecar-image
+        path: image
+      - name: lnd-sidecar-image-def
+        path: image-def
+      - name: pipeline-tasks
+      - name: charts-repo
+      outputs:
+      - name: charts-repo
+      params:
+        BRANCH: #@ data.values.git_branch
+        IMAGE_KEY_PATH: sidecarImage
+        IMAGE: lnd-sidecar
+        CHART: lnd
+      run:
+        path: pipeline-tasks/ci/tasks/bump-image-digest.sh
+  - put: lnd-sidecar-bot-branch
+    params:
+      repository: charts-repo
+      force: true
+  - task: open-charts-pr
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: pipeline-tasks
+      - name: lnd-sidecar-image
+        path: image
+      - name: charts-repo
+      params:
+        GH_TOKEN: #@ data.values.github_token
+        BRANCH: #@ data.values.git_branch
+        BOT_BRANCH: #@ data.values.git_lnd_sidecar_bot_branch
+        IMAGE_KEY_PATH: sidecarImage
+        IMAGE: lnd-sidecar
+        CHART: lnd
+      run:
+        path: pipeline-tasks/ci/tasks/open-image-bump-pr.sh
+
+resources:
+#@ for chart in cala_charts:
+- #@ chart_repo_resource(chart)
+- #@ testflight_tf_resource(chart)
+#@ end
+- #@ slack_resource("cala")
+
+#@ for chart in bitcoin_charts:
+- #@ chart_repo_resource(chart)
+- #@ testflight_tf_resource(chart)
+#@ end
+- #@ slack_resource("bitcoin")
+
+- name: charts-repo
+  type: git
+  source:
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: pipeline-tasks
+  type: git
+  source:
+    paths: [ci/tasks/*, ci/testflight/*, Makefile]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: blink-deployments
+  type: git
+  source:
+    uri: #@ data.values.deployments_git_uri
+    branch: #@ data.values.deployments_git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: chain-dl-image
+  type: registry-image
+  source:
+    tag: latest
+    username: #@ data.values.docker_registry_user
+    password: #@ data.values.docker_registry_password
+    repository: #@ chain_dl_image()
+
+- name: chain-dl-image-def
+  type: git
+  source:
+    paths: [images/chain-dl/Dockerfile]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+resource_types:
+- name: terraform
+  type: docker-image
+  source:
+    repository: ljfranklin/terraform-resource
+    tag: latest
+
+- name: honeymarker
+  type: docker-image
+  source:
+    repository: #@ data.values.docker_registry + "/honeymarker-resource"
+    tag: edge
+
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+
+- name: helm
+  type: docker-image
+  source:
+    repository: #@ data.values.docker_registry + "/helm-resource"
+    tag: edge
