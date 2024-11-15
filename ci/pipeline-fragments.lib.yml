@@ -1,7 +1,7 @@
 #@ load("@ytt:data", "data")
 
 #@ def pipeline_image():
-#@   return data.values.docker_registry + "/blink-deployments-pipeline"
+#@   return data.values.docker_registry + "/galoy-deployments-pipeline"
 #@ end
 
 #@ def chain_dl_image():
@@ -138,7 +138,7 @@ plan:
     - #@ testflight_job_name(chart)
     trigger: true
   - { get: pipeline-tasks }
-  - { get: blink-deployments }
+  - { get: galoy-deployments }
 - task: #@ "bump-" + chart
   config:
     platform: linux
@@ -147,18 +147,18 @@ plan:
     - name: #@ chart_resource_name(chart)
       path: chart
     - name: pipeline-tasks
-    - name: blink-deployments
+    - name: galoy-deployments
     outputs:
-    - name: blink-deployments
+    - name: galoy-deployments
     params:
       CHART: #@ chart
       BRANCH: #@ data.values.deployments_git_branch
       GITHUB_SSH_KEY: #@ data.values.github_private_key
     run:
       path: pipeline-tasks/ci/tasks/bump-chart.sh
-- put: blink-deployments
+- put: galoy-deployments
   params:
-    repository: blink-deployments
+    repository: galoy-deployments
     rebase: true
 #@ end
 

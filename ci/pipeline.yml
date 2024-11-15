@@ -182,7 +182,7 @@ resources:
     branch: #@ data.values.git_branch
     private_key: #@ data.values.github_private_key
 
-- name: blink-deployments
+- name: galoy-deployments
   type: git
   source:
     uri: #@ data.values.deployments_git_uri
