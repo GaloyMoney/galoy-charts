@@ -25,11 +25,6 @@ staging_smoketest_kubeconfig: ((staging-smoketest.kubeconfig))
 staging_state_bucket: "galoy-staging-tf-state"
 staging_creds: ((staging-gcp-creds.creds_json))
 
-galoy_mattermost_webhook_url: ((galoy-main-mattermost.api_url))
-monitoring_mattermost_webhook_url: ((monitoring-mattermost.api_url))
-bitcoin_mattermost_webhook_url: ((bitcoin-mattermost.api_url))
-addons_mattermost_webhook_url: ((addons-mattermost.api_url))
-auth_mattermost_webhook_url: ((auth-mattermost.api_url))
 stablesats_mattermost_webhook_url: ((addons-mattermost.api_url))
 galoy_deps_mattermost_webhook_url: ((galoy-deps-mattermost.api_url))
 cala_mattermost_webhook_url: ((galoy-deps-mattermost.api_url))
