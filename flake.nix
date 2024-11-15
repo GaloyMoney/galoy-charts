@@ -15,8 +15,8 @@
       pkgs = import nixpkgs {inherit system;};
 
       # Function to create script
-      mkScript = name: text: let
-        script = pkgs.writeShellScriptBin name text;
+      mkScript = alias: command: let
+        script = pkgs.writeShellScriptBin alias command;
       in
         script;
 
