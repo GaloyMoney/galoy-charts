@@ -25,12 +25,12 @@ staging_smoketest_kubeconfig: ((staging-smoketest.kubeconfig))
 staging_state_bucket: "galoy-staging-tf-state"
 staging_creds: ((staging-gcp-creds.creds_json))
 
-galoy_slack_webhook_url: ((galoy-main-slack.api_url))
-monitoring_slack_webhook_url: ((monitoring-slack.api_url))
-bitcoin_slack_webhook_url: ((bitcoin-slack.api_url))
-addons_slack_webhook_url: ((addons-slack.api_url))
-auth_slack_webhook_url: ((auth-slack.api_url))
-stablesats_slack_webhook_url: ((addons-slack.api_url))
-galoy_deps_slack_webhook_url: ((galoy-deps-slack.api_url))
-cala_slack_webhook_url: ((galoy-deps-slack.api_url))
-slack_username: concourse
+galoy_mattermost_webhook_url: ((galoy-main-mattermost.api_url))
+monitoring_mattermost_webhook_url: ((monitoring-mattermost.api_url))
+bitcoin_mattermost_webhook_url: ((bitcoin-mattermost.api_url))
+addons_mattermost_webhook_url: ((addons-mattermost.api_url))
+auth_mattermost_webhook_url: ((auth-mattermost.api_url))
+stablesats_mattermost_webhook_url: ((addons-mattermost.api_url))
+galoy_deps_mattermost_webhook_url: ((galoy-deps-mattermost.api_url))
+cala_mattermost_webhook_url: ((galoy-deps-mattermost.api_url))
+mattermost_username: concourse
