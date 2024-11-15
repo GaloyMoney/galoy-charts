@@ -13,6 +13,18 @@
   }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {inherit system;};
+
+      # Function to create script
+      mkScript = name: text: let
+        script = pkgs.writeShellScriptBin name text;
+      in script;
+      
+      # Define your scripts/aliases
+      scripts = [
+        (mkScript "k" ''kubectl "$@"'')
+        (mkScript "tf" ''tofu "$@"'')
+      ];
+
       devEnvVars = {
         KUBE_CONFIG_PATH = "~/.kube/config";
         KUBE_CTX = "k3d-k3s-default";
@@ -33,12 +45,7 @@
               yq-go
               kubernetes-helm
               opentofu
-            ];
-
-            shellHook = ''
-              alias tf=tofu
-              alias k=kubectl
-            '';
+            ] ++ scripts;
           });
 
         formatter = alejandra;
