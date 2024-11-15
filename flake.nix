@@ -17,8 +17,9 @@
       # Function to create script
       mkScript = name: text: let
         script = pkgs.writeShellScriptBin name text;
-      in script;
-      
+      in
+        script;
+
       # Define your scripts/aliases
       scripts = [
         (mkScript "k" ''kubectl "$@"'')
@@ -33,19 +34,21 @@
       with pkgs; {
         devShells.default = mkShell (devEnvVars
           // {
-            nativeBuildInputs = [
-              alejandra
-              kubectl
-              python3
-              tilt
-              jq
-              k3d
-              vendir
-              ytt
-              yq-go
-              kubernetes-helm
-              opentofu
-            ] ++ scripts;
+            nativeBuildInputs =
+              [
+                alejandra
+                kubectl
+                python3
+                tilt
+                jq
+                k3d
+                vendir
+                ytt
+                yq-go
+                kubernetes-helm
+                opentofu
+              ]
+              ++ scripts;
           });
 
         formatter = alejandra;
