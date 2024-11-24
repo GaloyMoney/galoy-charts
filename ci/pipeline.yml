@@ -96,7 +96,6 @@ resources:
 - #@ chart_repo_resource(chart)
 - #@ testflight_tf_resource(chart)
 #@ end
-- #@ mattermost_resource("bitcoin")
 
 - name: charts-repo
   type: git
