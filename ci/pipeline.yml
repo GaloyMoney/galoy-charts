@@ -73,6 +73,7 @@ jobs:
 #@ end
 - #@ testflight_job("galoy", "galoy", galoy_chart_vars())
 - #@ bump_in_deployments_job("galoy")
+- #@ testflight_job("galoy-deps", "galoy-deps", galoy_deps_chart_vars())
 - #@ bump_in_deployments_job("galoy-deps")
 
 - name: build-chain-dl-image
@@ -95,6 +96,10 @@ resources:
 - #@ chart_repo_resource(chart)
 - #@ testflight_tf_resource(chart)
 #@ end
+
+- #@ chart_repo_resource("galoy-deps")
+- #@ testflight_tf_resource("galoy-deps")
+- #@ mattermost_resource("galoy-deps")
 
 - name: charts-repo
   type: git
