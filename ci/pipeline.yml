@@ -73,7 +73,6 @@ jobs:
 #@ end
 - #@ testflight_job("galoy", "galoy", galoy_chart_vars())
 - #@ bump_in_deployments_job("galoy")
-- #@ bump_in_deployments_job("stablesats")
 - #@ bump_in_deployments_job("galoy-deps")
 
 - name: build-chain-dl-image
