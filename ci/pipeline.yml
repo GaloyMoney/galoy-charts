@@ -54,10 +54,6 @@ groups:
   - #@ testflight_job_name(chart)
   - #@ bump_in_deployments_job_name(chart)
 #@ end
-#@ for chart in addons_charts:
-  - #@ testflight_job_name(chart)
-  - #@ bump_in_deployments_job_name(chart)
-#@ end
 - name: galoy-deps
   jobs:
   - galoy-deps-testflight
