@@ -89,6 +89,7 @@ resources:
 - #@ testflight_tf_resource(chart)
 #@ end
 
+- #@ mattermost_resource("bitcoin")
 - #@ chart_repo_resource("galoy-deps")
 - #@ testflight_tf_resource("galoy-deps")
 - #@ mattermost_resource("galoy-deps")
