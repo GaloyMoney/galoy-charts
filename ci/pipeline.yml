@@ -26,10 +26,6 @@ smoketest_kubeconfig: #@ data.values.staging_smoketest_kubeconfig
 #@ end
 
 groups:
-- name: galoy
-  jobs:
-  - galoy-testflight
-  - bump-galoy-in-deployments
 - name: bitcoin
   jobs:
 #@ for chart in bitcoin_charts:
@@ -44,17 +40,11 @@ groups:
 #@ end
 - name: all
   jobs:
-  - galoy-testflight
-  - bump-galoy-in-deployments
 #@ for chart in cala_charts:
   - #@ testflight_job_name(chart)
   - #@ bump_in_deployments_job_name(chart)
 #@ end
 #@ for chart in bitcoin_charts:
-  - #@ testflight_job_name(chart)
-  - #@ bump_in_deployments_job_name(chart)
-#@ end
-#@ for chart in addons_charts:
   - #@ testflight_job_name(chart)
   - #@ bump_in_deployments_job_name(chart)
 #@ end
@@ -75,9 +65,7 @@ jobs:
 - #@ testflight_job(chart, "bitcoin")
 - #@ bump_in_deployments_job(chart)
 #@ end
-- #@ testflight_job("galoy", "galoy", galoy_chart_vars())
-- #@ bump_in_deployments_job("galoy")
-- #@ bump_in_deployments_job("stablesats")
+- #@ testflight_job("galoy-deps", "galoy-deps", galoy_deps_chart_vars())
 - #@ bump_in_deployments_job("galoy-deps")
 
 - name: build-chain-dl-image
@@ -100,7 +88,11 @@ resources:
 - #@ chart_repo_resource(chart)
 - #@ testflight_tf_resource(chart)
 #@ end
+
 - #@ mattermost_resource("bitcoin")
+- #@ chart_repo_resource("galoy-deps")
+- #@ testflight_tf_resource("galoy-deps")
+- #@ mattermost_resource("galoy-deps")
 
 - name: charts-repo
   type: git
