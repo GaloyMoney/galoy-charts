@@ -22,7 +22,7 @@ testflight_okex_passphrase: ((testflight-okex.passphrase))
 testflight_okex_api_key: ((testflight-okex.api_key))
 staging_worker_tag: galoy-staging
 staging_smoketest_kubeconfig: ((staging-smoketest.kubeconfig))
-staging_state_bucket: "galoy-staging-tf-state"
+staging_state_bucket: "galoystaging-tf-state"
 staging_creds: ((staging-gcp-creds.creds_json))
 
 galoy_deps_mattermost_webhook_url: ((galoy-deps-mattermost.api_url))
