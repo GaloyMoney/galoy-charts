@@ -3,7 +3,7 @@ variable "testflight_namespace" {}
 locals {
   cluster_name     = "galoy-staging-cluster"
   cluster_location = "us-east1"
-  gcp_project      = "galoy-staging"
+  gcp_project      = "galoystaging"
 
   smoketest_namespace  = "galoy-staging-smoketest"
   testflight_namespace = var.testflight_namespace

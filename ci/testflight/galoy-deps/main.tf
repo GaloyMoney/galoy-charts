@@ -4,7 +4,7 @@ variable "smoketest_kubeconfig" {}
 locals {
   cluster_name     = "galoy-staging-cluster"
   cluster_location = "us-east1"
-  gcp_project      = "galoy-staging"
+  gcp_project      = "galoystaging"
 
   testflight_namespace         = var.testflight_namespace
   smoketest_namespace          = "galoy-staging-smoketest"
