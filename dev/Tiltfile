@@ -1,0 +1,4 @@
+include('./galoy-deps/Tiltfile')
+include('./bitcoin/Tiltfile')
+include('./cala/Tiltfile')
+include('./smoketest/Tiltfile')
