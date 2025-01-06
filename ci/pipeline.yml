@@ -1,0 +1,157 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("pipeline-fragments.lib.yml",
+#@   "chain_dl_image",
+#@   "testflight_job",
+#@   "bump_in_deployments_job",
+#@   "chart_repo_resource",
+#@   "testflight_tf_resource",
+#@   "testflight_job_name",
+#@   "bump_in_deployments_job_name",
+#@   "chart_resource_name",
+#@   "mattermost_resource",
+#@   "bitcoin_charts",
+#@   "cala_charts",
+#@   "task_image_config",
+#@   "repo_resource",
+#@   "build_task")
+
+#@ def galoy_chart_vars():
+testflight_backups_creds: #@ data.values.testflight_backups_creds
+smoketest_kubeconfig: #@ data.values.staging_smoketest_kubeconfig
+#@ end
+
+#@ def galoy_deps_chart_vars():
+smoketest_kubeconfig: #@ data.values.staging_smoketest_kubeconfig
+#@ end
+
+groups:
+- name: bitcoin
+  jobs:
+#@ for chart in bitcoin_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+- name: cala
+  jobs:
+#@ for chart in cala_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+- name: all
+  jobs:
+#@ for chart in cala_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+#@ for chart in bitcoin_charts:
+  - #@ testflight_job_name(chart)
+  - #@ bump_in_deployments_job_name(chart)
+#@ end
+- name: galoy-deps
+  jobs:
+  - galoy-deps-testflight
+  - bump-galoy-deps-in-deployments
+- name: images
+  jobs:
+  - build-chain-dl-image
+
+jobs:
+#@ for chart in cala_charts:
+- #@ testflight_job(chart, "cala")
+- #@ bump_in_deployments_job(chart)
+#@ end
+#@ for chart in bitcoin_charts:
+- #@ testflight_job(chart, "bitcoin")
+- #@ bump_in_deployments_job(chart)
+#@ end
+- #@ testflight_job("galoy-deps", "galoy-deps", galoy_deps_chart_vars())
+- #@ bump_in_deployments_job("galoy-deps")
+
+- name: build-chain-dl-image
+  serial: true
+  plan:
+  - {get: chain-dl-image-def, trigger: true}
+  - #@ build_task("chain-dl-image-def", "chain-dl-image-def/images/chain-dl")
+  - put: chain-dl-image
+    params:
+      image: image/image.tar
+
+resources:
+#@ for chart in cala_charts:
+- #@ chart_repo_resource(chart)
+- #@ testflight_tf_resource(chart)
+#@ end
+- #@ mattermost_resource("cala")
+
+#@ for chart in bitcoin_charts:
+- #@ chart_repo_resource(chart)
+- #@ testflight_tf_resource(chart)
+#@ end
+
+- #@ mattermost_resource("bitcoin")
+- #@ chart_repo_resource("galoy-deps")
+- #@ testflight_tf_resource("galoy-deps")
+- #@ mattermost_resource("galoy-deps")
+
+- name: charts-repo
+  type: git
+  source:
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: pipeline-tasks
+  type: git
+  source:
+    paths: [ci/tasks/*, ci/testflight/*, Makefile]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: galoy-deployments
+  type: git
+  source:
+    uri: #@ data.values.deployments_git_uri
+    branch: #@ data.values.deployments_git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: chain-dl-image
+  type: registry-image
+  source:
+    tag: latest
+    username: #@ data.values.docker_registry_user
+    password: #@ data.values.docker_registry_password
+    repository: #@ chain_dl_image()
+
+- name: chain-dl-image-def
+  type: git
+  source:
+    paths: [images/chain-dl/Dockerfile]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+resource_types:
+- name: terraform
+  type: docker-image
+  source:
+    repository: ljfranklin/terraform-resource
+    tag: latest
+
+- name: honeymarker
+  type: docker-image
+  source:
+    repository: #@ data.values.docker_registry + "/honeymarker-resource"
+    tag: edge
+
+- name: mattermost-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+
+- name: helm
+  type: docker-image
+  source:
+    repository: #@ data.values.docker_registry + "/helm-resource"
+    tag: edge

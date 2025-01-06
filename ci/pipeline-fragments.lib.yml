@@ -1,0 +1,243 @@
+#@ load("@ytt:data", "data")
+
+#@ def pipeline_image():
+#@   return data.values.docker_registry + "/galoy-deployments-pipeline"
+#@ end
+
+#@ def chain_dl_image():
+#@   return data.values.docker_registry + "/bitcoin-chain-dl"
+#@ end
+
+#@ def task_image_config():
+type: registry-image
+source:
+  username: #@ data.values.docker_registry_user
+  password: #@ data.values.docker_registry_password
+  repository: #@ pipeline_image()
+#@ end
+
+#@ def testflight_job_name(chart):
+#@  return chart + "-testflight"
+#@ end
+
+#@ def bump_in_deployments_job_name(chart):
+#@  return "bump-" + chart + "-in-deployments"
+#@ end
+
+#@ def chart_resource_name(chart):
+#@   return chart + "-chart"
+#@ end
+
+#@ def build_task(input_name, context_path):
+task: build
+config:
+  platform: linux
+  image_resource:
+    type: registry-image
+    source:
+      repository: gcr.io/kaniko-project/executor
+      tag: debug
+  inputs:
+  - name: #@ input_name
+  outputs:
+  - name: image
+  run:
+    path: /kaniko/executor
+    args:
+      - --dockerfile=Dockerfile
+      - #@ "--context=" + context_path
+      - --use-new-run
+      - --single-snapshot
+      - --cache=false
+      - --no-push
+      - --tar-path=image/image.tar
+#@ end
+
+#@ cala_charts = ["cala"]
+#@ bitcoin_charts = ["bitcoind", "bria", "fulcrum"]
+
+#@ def testflight_job(chart, deployment, vars = {}):
+name: #@ testflight_job_name(chart)
+plan:
+- in_parallel:
+  - get: #@ chart_resource_name(chart)
+    trigger: true
+  - { get: pipeline-tasks }
+- task: prepare-testflight
+  config:
+    platform: linux
+    image_resource: #@ task_image_config()
+    inputs:
+    - name: pipeline-tasks
+    - name: #@ chart_resource_name(chart)
+      path: repo
+    outputs:
+    - name: testflight
+    params:
+      CHART: #@ chart
+    run:
+      path: pipeline-tasks/ci/tasks/prepare-testflight.sh
+- put: #@ "tf-" + chart + "-testflight"
+  tags:
+    - #@ data.values.staging_worker_tag
+  params:
+    vars_files: [ testflight/tf/terraform.tfvars ]
+    terraform_source: testflight/tf
+    env_name_file: testflight/env_name
+    vars: #@ vars
+- task: get-smoketest-settings
+  tags:
+    - #@ data.values.staging_worker_tag
+  config:
+    platform: linux
+    image_resource: #@ task_image_config()
+    inputs:
+    - name: #@ chart_resource_name(chart)
+      path: pipeline-tasks
+    - name: testflight
+    outputs:
+    - name: smoketest-settings
+    params:
+      SMOKETEST_KUBECONFIG: #@ data.values.staging_smoketest_kubeconfig
+      OUT: smoketest-settings
+    run:
+      path: pipeline-tasks/ci/tasks/get-smoketest-settings.sh
+- task: smoketest
+  tags:
+    - #@ data.values.staging_worker_tag
+  config:
+    platform: linux
+    image_resource: #@ task_image_config()
+    inputs:
+    - name: #@ chart_resource_name(chart)
+      path: pipeline-tasks
+    - name: smoketest-settings
+    params:
+    run:
+      path: #@ "pipeline-tasks/ci/tasks/" + chart + "-smoketest.sh"
+- put: #@ "tf-" + chart + "-testflight"
+  tags:
+    - #@ data.values.staging_worker_tag
+  params:
+    vars_files: [ testflight/tf/terraform.tfvars ]
+    terraform_source: testflight/tf
+    env_name_file: testflight/env_name
+    action: destroy
+    vars: #@ vars
+  get_params: { action: destroy }
+- #@ mattermost_success_notification(deployment)
+on_failure: #@ mattermost_failure_notification(deployment)
+#@ end
+
+#@ def bump_in_deployments_job(chart):
+name: #@ "bump-" + chart + "-in-deployments"
+plan:
+- in_parallel:
+  - get: #@ chart_resource_name(chart)
+    passed:
+    - #@ testflight_job_name(chart)
+    trigger: true
+  - { get: pipeline-tasks }
+  - { get: galoy-deployments }
+- task: #@ "bump-" + chart
+  config:
+    platform: linux
+    image_resource: #@ task_image_config()
+    inputs:
+    - name: #@ chart_resource_name(chart)
+      path: chart
+    - name: pipeline-tasks
+    - name: galoy-deployments
+    outputs:
+    - name: galoy-deployments
+    params:
+      CHART: #@ chart
+      BRANCH: #@ data.values.deployments_git_branch
+      GITHUB_SSH_KEY: #@ data.values.github_private_key
+    run:
+      path: pipeline-tasks/ci/tasks/bump-chart.sh
+- put: galoy-deployments
+  params:
+    repository: galoy-deployments
+    rebase: true
+#@ end
+
+#@ def chart_repo_resource(chart_name):
+name: #@ chart_name + "-chart"
+type: git
+source:
+  ignore_paths:
+  - #@ "charts/" + chart_name + "/Chart.yaml"
+  paths:
+  - #@ "charts/" + chart_name + "/*"
+  - #@ "charts/" + chart_name + "/**/*"
+  - #@ "ci/tasks/" + chart_name + "-smoketest.sh"
+  - #@ "ci/testflight/" + chart_name + "/*"
+  - #@ "ci/tasks/get-smoketest-settings.sh"
+  uri: #@ data.values.git_uri
+  branch: #@ data.values.git_branch
+  private_key: #@ data.values.github_private_key
+#@ end
+
+#@ def testflight_tf_resource(chart_name):
+name: #@ "tf-" + chart_name + "-testflight"
+type: terraform
+source:
+  backend_type: gcs
+  backend_config:
+    bucket: #@ data.values.staging_state_bucket
+    prefix: #@ "galoy-staging/services/" + chart_name + "-testflight"
+    credentials: #@ data.values.staging_creds
+  env:
+    GOOGLE_CREDENTIALS: #@ data.values.staging_creds
+#@ end
+
+#@ def mattermost_failure_notification(deployment):
+#@ fail_url = "<$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME| :face_with_symbols_on_mouth: $BUILD_JOB_NAME> failed!"
+put: #@ deployment + "-mattermost"
+params:
+  username: #@ data.values.mattermost_username
+  icon_url: https://cl.ly/2F421Y300u07/concourse-logo-blue-transparent.png
+  text:    #@ fail_url
+#@ end
+
+#@ def mattermost_success_notification(deployment):
+#@ success_url = "<$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME| :zap: $BUILD_JOB_NAME> completed!"
+put: #@ deployment + "-mattermost"
+params:
+  username: #@ data.values.mattermost_username
+  icon_url: https://cl.ly/2F421Y300u07/concourse-logo-blue-transparent.png
+  text:    #@ success_url
+#@ end
+
+#@ def mattermost_resource(deployment):
+name: #@ deployment + "-mattermost"
+type: mattermost-notification
+source:
+  url: #@ getattr(data.values, deployment.replace("-", "_") + "_mattermost_webhook_url")
+#@ end
+
+#@ def repo_out_resource(repo_name):
+name: #@ repo_out_resource_name(repo_name)
+type: git
+source:
+  uri: #@ data.values.git_org_uri + "/" + repo_name + ".git"
+  private_key: #@ data.values.github_private_key
+#@ end
+
+#@ def repo_out_resource_name(repo_name):
+#@   return repo_name + "-repo-out"
+#@ end
+
+#@ def repo_resource(repo_name):
+name: #@ repo_resource_name(repo_name)
+type: git
+source:
+  uri: #@ data.values.git_org_uri + "/" + repo_name + ".git"
+  private_key: #@ data.values.github_private_key
+  branch: main
+#@ end
+
+#@ def repo_resource_name(repo_name):
+#@   return repo_name + "-repo"
+#@ end
