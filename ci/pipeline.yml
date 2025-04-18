@@ -9,7 +9,6 @@
 #@   "testflight_job_name",
 #@   "bump_in_deployments_job_name",
 #@   "chart_resource_name",
-#@   "mattermost_resource",
 #@   "bitcoin_charts",
 #@   "cala_charts",
 #@   "task_image_config",
@@ -78,17 +77,14 @@ resources:
 - #@ chart_repo_resource(chart)
 - #@ testflight_tf_resource(chart)
 #@ end
-- #@ mattermost_resource("cala")
 
 #@ for chart in bitcoin_charts:
 - #@ chart_repo_resource(chart)
 - #@ testflight_tf_resource(chart)
 #@ end
 
-- #@ mattermost_resource("bitcoin")
 - #@ chart_repo_resource("galoy-deps")
 - #@ testflight_tf_resource("galoy-deps")
-- #@ mattermost_resource("galoy-deps")
 
 - name: charts-repo
   type: git
@@ -140,11 +136,6 @@ resource_types:
   source:
     repository: #@ data.values.docker_registry + "/honeymarker-resource"
     tag: edge
-
-- name: mattermost-notification
-  type: docker-image
-  source:
-    repository: cfcommunity/slack-notification-resource
 
 - name: helm
   type: docker-image
