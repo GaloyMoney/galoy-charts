@@ -21,10 +21,6 @@ testflight_backups_creds: #@ data.values.testflight_backups_creds
 smoketest_kubeconfig: #@ data.values.staging_smoketest_kubeconfig
 #@ end
 
-#@ def galoy_deps_chart_vars():
-smoketest_kubeconfig: #@ data.values.staging_smoketest_kubeconfig
-#@ end
-
 groups:
 - name: bitcoin
   jobs:
@@ -65,7 +61,7 @@ jobs:
 - #@ testflight_job(chart, "bitcoin")
 - #@ bump_in_deployments_job(chart)
 #@ end
-- #@ testflight_job("galoy-deps", "galoy-deps", galoy_deps_chart_vars())
+- #@ testflight_job("galoy-deps", "galoy-deps")
 - #@ bump_in_deployments_job("galoy-deps")
 
 - name: build-chain-dl-image
