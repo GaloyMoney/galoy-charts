@@ -4,7 +4,7 @@ set -eu
 
 mkdir -p .kube
 export KUBECONFIG=$(pwd)/.kube/config
-echo ${SMOKETEST_KUBECONFIG} | base64 --decode > ${KUBECONFIG}
+echo ${SMOKETEST_KUBECONFIG} | base64 --decode > ${KUBECONFIG} || true
 
 kubectl get secret ${SMOKETEST_SECRET:-$(cat testflight/env_name)} -o json \
   | jq -r '.data' > ${OUT}/data.json
