@@ -2,18 +2,6 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-strimzi-kafka-operator:
-  enabled: false
-  nameOverride: kafka
-  watchNamespaces: []
-  kafka:
-    listener:
-      type: cluster-ip
-    resources: {}
-  zookeeper:
-    resources: {}
-  resources: {}
-
 kubemonkey:
   enabled: true
   fullnameOverride: kubemonkey

@@ -125,8 +125,6 @@ plan:
     action: destroy
     vars: #@ vars
   get_params: { action: destroy }
-- #@ mattermost_success_notification(deployment)
-on_failure: #@ mattermost_failure_notification(deployment)
 #@ end
 
 #@ def bump_in_deployments_job(chart):
@@ -190,31 +188,6 @@ source:
     credentials: #@ data.values.staging_creds
   env:
     GOOGLE_CREDENTIALS: #@ data.values.staging_creds
-#@ end
-
-#@ def mattermost_failure_notification(deployment):
-#@ fail_url = "<$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME| :face_with_symbols_on_mouth: $BUILD_JOB_NAME> failed!"
-put: #@ deployment + "-mattermost"
-params:
-  username: #@ data.values.mattermost_username
-  icon_url: https://cl.ly/2F421Y300u07/concourse-logo-blue-transparent.png
-  text:    #@ fail_url
-#@ end
-
-#@ def mattermost_success_notification(deployment):
-#@ success_url = "<$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME| :zap: $BUILD_JOB_NAME> completed!"
-put: #@ deployment + "-mattermost"
-params:
-  username: #@ data.values.mattermost_username
-  icon_url: https://cl.ly/2F421Y300u07/concourse-logo-blue-transparent.png
-  text:    #@ success_url
-#@ end
-
-#@ def mattermost_resource(deployment):
-name: #@ deployment + "-mattermost"
-type: mattermost-notification
-source:
-  url: #@ getattr(data.values, deployment.replace("-", "_") + "_mattermost_webhook_url")
 #@ end
 
 #@ def repo_out_resource(repo_name):
