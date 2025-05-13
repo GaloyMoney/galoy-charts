@@ -37,8 +37,8 @@ cat <<EOF >$CIJOBS
 #@ def task_image_config():
 type: registry-image
 source:
-  username: #@ data.values.docker_registry_user
-  password: #@ data.values.docker_registry_password
+  username: #@ data.values.gar_registry_user
+  password: #@ data.values.gar_registry_password
   repository: #@ pipeline_image()
 #@ end
 EOF
