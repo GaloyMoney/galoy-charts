@@ -219,6 +219,7 @@ cert-manager:
 ingress-nginx:
   enabled: true
   controller:
+    allowSnippetAnnotations: true
     resources: {}
     replicaCount: 2
     ingressClassResource:
