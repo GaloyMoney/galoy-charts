@@ -1,0 +1,102 @@
+load('ext://helm_resource', 'helm_resource')
+load('ext://namespace', 'namespace_create')
+load('ext://secret', 'secret_from_dict')
+load('../common/Tiltfile', 'helm_release')
+update_settings(k8s_upsert_timeout_secs=120)
+
+name_prefix = 'galoy-dev'
+bitcoin_network = 'regtest'
+bitcoind_rpcpassword = 'rpcpassword'
+bitcoin_namespace = '{}-bitcoin'.format(name_prefix)
+smoketest_namespace = '{}-smoketest'.format(name_prefix)
+
+namespace_create(bitcoin_namespace)
+
+k8s_yaml(secret_from_dict(
+  name='bitcoind-rpcpassword',
+  namespace=bitcoin_namespace,
+  inputs={'password': bitcoind_rpcpassword},
+))
+
+helm_release(
+  "../../charts/bitcoind",
+  name="bitcoind",
+  namespace=bitcoin_namespace,
+  values=['./bitcoind-regtest-values.yml']
+)
+
+k8s_resource(workload='bitcoind', labels='bitcoin')
+
+k8s_yaml(secret_from_dict(
+  name='bitcoind-onchain-rpcpassword',
+  namespace=bitcoin_namespace,
+  inputs={'password': bitcoind_rpcpassword},
+))
+
+k8s_yaml(secret_from_dict(
+  name='bitcoind-signer-descriptor',
+  namespace=bitcoin_namespace,
+  inputs={
+    'descriptor_json_base64': local(
+      "base64 bitcoind_signers_descriptors.json | tr -d '\n\r'"
+    )
+  },
+))
+
+helm_release(
+  '../../charts/bitcoind',
+  name='bitcoind-onchain',
+  namespace=bitcoin_namespace,
+  values=['./bitcoind-regtest-values.yml', './bitcoind-onchain-values.yml']
+)
+
+k8s_resource(workload='bitcoind-onchain', labels='bitcoin')
+
+local_resource(
+  name="bitcoind-block-generator",
+  cmd='./generateBlock.sh',
+  labels="bitcoin",
+  resource_deps=["bitcoind-onchain", "bitcoind"]
+)
+
+k8s_yaml(secret_from_dict(
+  name='bria-smoketest',
+  namespace=bitcoin_namespace,
+  inputs={
+    'key': 'value'
+  },
+))
+
+k8s_yaml(secret_from_dict(
+  name='bria',
+  namespace=bitcoin_namespace,
+  inputs={
+    'pg-con': 'postgres://bria:bria@bria-postgresql:5432/bria',
+    'signer-encryption-key': local('openssl rand -hex 32'),
+  },
+))
+
+helm_release(
+  '../../charts/bria',
+  name='bria',
+  namespace=bitcoin_namespace,
+  values=['./bria-values.yml'],
+  dependency_build=True,
+  add_repos=True
+)
+
+k8s_resource(workload='bria', labels='bitcoin')
+
+# create bitcoind smoketest secret from snippet above
+k8s_yaml(secret_from_dict(
+  name='bitcoind-smoketest',
+  namespace=smoketest_namespace,
+  inputs={
+    'bitcoind_rpcpassword': bitcoind_rpcpassword,
+    'bitcoind_endpoint': 'bitcoind.{}.svc.cluster.local'.format(bitcoin_namespace),
+    'bitcoind_port': '18443',
+    'bitcoind_user': 'rpcuser',
+    'bitcoind_onchain_rpcpassword': bitcoind_rpcpassword,
+    'bitcoind_onchain_endpoint': 'bitcoind.{}.svc.cluster.local'.format(bitcoin_namespace),
+  }
+))
