@@ -4,12 +4,12 @@ dependencies:
   version: v1.17.2
 - name: ingress-nginx
   repository: https://kubernetes.github.io/ingress-nginx
-  version: 4.12.2
+  version: 4.13.3
 - name: kube-monkey
   repository: https://asobti.github.io/kube-monkey/charts/repo
   version: 1.5.2
 - name: opentelemetry-collector
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.121.0
-digest: sha256:febf2adcffe045a8777097abaae236456780d0ec46eefff5f40d9e12fe7d4d7e
-generated: "2025-05-13T11:12:15.126297+02:00"
+digest: sha256:0bb9e2d7205823fcc84b763c600cc1b0e51d7a7d0d72cb160dc8e9a5feece29d
+generated: "2025-09-30T15:36:35.597450467Z"
