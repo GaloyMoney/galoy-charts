@@ -1,7 +1,8 @@
 kubemonkey:
   fullnameOverride: ${kubemonkey_fullname_override}
 cert-manager:
-  installCRDs: false
+  crds:
+   enabled: false
 ingress-nginx:
   controller:
     ingressClassResource:
