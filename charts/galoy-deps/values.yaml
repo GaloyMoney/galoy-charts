@@ -216,7 +216,6 @@ ingress-nginx:
   controller:
     allowSnippetAnnotations: true
     resources: {}
-    replicaCount: 2
     ingressClassResource:
       default: true
       watchIngressWithoutClass: true
