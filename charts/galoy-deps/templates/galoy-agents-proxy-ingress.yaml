@@ -1,0 +1,37 @@
+{{- if .Values.galoyAgentsProxy.enabled -}}
+{{- if not .Values.galoyAgentsProxy.publicHostname -}}
+{{- fail "galoyAgentsProxy.publicHostname is required when galoyAgentsProxy.enabled=true." -}}
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: galoy-agents-proxy-envoy
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    galoy-agents-proxy/component: envoy
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.galoyAgentsProxy.ingress.certManagerClusterIssuer | quote }}
+    {{- if .Values.galoyAgentsProxy.galoyAgentsEgressIP }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.galoyAgentsProxy.galoyAgentsEgressIP | quote }}
+    {{- end }}
+    {{- with .Values.galoyAgentsProxy.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.galoyAgentsProxy.ingress.className | quote }}
+  tls:
+    - hosts:
+        - {{ .Values.galoyAgentsProxy.publicHostname | quote }}
+      secretName: galoy-agents-proxy-envoy-tls
+  rules:
+    - host: {{ .Values.galoyAgentsProxy.publicHostname | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: galoy-agents-proxy-envoy
+                port:
+                  name: http
+{{- end }}

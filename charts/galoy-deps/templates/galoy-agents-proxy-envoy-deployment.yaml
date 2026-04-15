@@ -1,0 +1,72 @@
+{{- if .Values.galoyAgentsProxy.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: galoy-agents-proxy-envoy
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    galoy-agents-proxy/component: envoy
+spec:
+  replicas: {{ .Values.galoyAgentsProxy.envoy.replicas }}
+  selector:
+    matchLabels:
+      {{- include "galoy-deps.selectorLabels" . | nindent 6 }}
+      galoy-agents-proxy/component: envoy
+  template:
+    metadata:
+      labels:
+        {{- include "galoy-deps.labels" . | nindent 8 }}
+        galoy-agents-proxy/component: envoy
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/galoy-agents-proxy-envoy-cm.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: envoy
+          image: "{{ .Values.galoyAgentsProxy.envoy.image.repository }}:{{ .Values.galoyAgentsProxy.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.galoyAgentsProxy.envoy.image.pullPolicy }}
+          args:
+            - "-c"
+            - "/etc/envoy/envoy.yaml"
+            - "--log-level"
+            - "info"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: admin
+              containerPort: 9901
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: admin
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: admin
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            {{- toYaml .Values.galoyAgentsProxy.envoy.resources | nindent 12 }}
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: galoy-agents-proxy-envoy
+{{- end }}

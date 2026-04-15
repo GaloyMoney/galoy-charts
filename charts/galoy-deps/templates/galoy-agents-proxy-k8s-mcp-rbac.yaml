@@ -1,0 +1,58 @@
+{{- if .Values.galoyAgentsProxy.enabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: galoy-agents-proxy-k8s-mcp-read
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    galoy-agents-proxy/component: k8s-mcp
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - services
+      - configmaps
+      - events
+      - endpoints
+      - persistentvolumeclaims
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources:
+      - pods/log
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - statefulsets
+      - replicasets
+      - daemonsets
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+{{- range $ns := .Values.galoyAgentsProxy.kubernetesMcp.allowedNamespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: galoy-agents-proxy-k8s-mcp-read
+  namespace: {{ $ns }}
+  labels:
+    {{- include "galoy-deps.labels" $ | nindent 4 }}
+    galoy-agents-proxy/component: k8s-mcp
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: galoy-agents-proxy-k8s-mcp-read
+subjects:
+  - kind: ServiceAccount
+    name: galoy-agents-proxy-k8s-mcp
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- end }}

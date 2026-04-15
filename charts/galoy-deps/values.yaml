@@ -233,3 +233,89 @@ ingress-nginx:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "10254"
+
+galoyAgentsProxy:
+  # Master toggle. When false, nothing below is deployed and the kubernetes-mcp-server
+  # dependency is skipped via its `condition: galoyAgentsProxy.enabled`.
+  enabled: false
+
+  # Identifier for this deployment (e.g. "galoy-staging"). Used in labels/logs/JWT audience.
+  deploymentId: ""
+
+  # Public hostname exposed via the existing ingress-nginx (e.g. mcp.galoy-staging.galoy.io).
+  publicHostname: ""
+
+  # galoy-agents JWKS endpoint. Envoy fetches and caches public keys from here.
+  jwksUrl: "https://mcp.agents.galoy.io/.well-known/jwks.json"
+  jwksHost: "mcp.agents.galoy.io"
+  jwksPort: 443
+  jwtIssuer: "galoy-agents"
+
+  # Optional: restrict inbound traffic to this source IP (galoy-agents cluster egress NAT).
+  galoyAgentsEgressIP: ""
+
+  kubernetesMcp:
+    # Namespaces where the kubernetes-mcp-server SA gets a read-only RoleBinding.
+    # Kept separate from the upstream chart values so we can template RoleBindings per namespace.
+    allowedNamespaces: []
+
+  postgresMcp:
+    image:
+      repository: crystaldba/postgres-mcp
+      tag: latest
+      pullPolicy: IfNotPresent
+    # Name of an existing Secret in this namespace containing a DATABASE_URI key
+    # pointing at the read-only DB role.
+    existingSecret: ""
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+  envoy:
+    image:
+      repository: envoyproxy/envoy
+      tag: v1.32-latest
+      pullPolicy: IfNotPresent
+    replicas: 2
+    rateLimitRps: 20
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  ingress:
+    className: "nginx"
+    certManagerClusterIssuer: "letsencrypt"
+    annotations: {}
+
+# Values for the upstream kubernetes-mcp-server chart (only applied when galoyAgentsProxy.enabled=true).
+kubernetes-mcp-server:
+  fullnameOverride: "galoy-agents-proxy-k8s-mcp"
+  extraArgs:
+    - "--read-only"
+  ingress:
+    enabled: false
+  rbac:
+    # We create our own namespace-scoped RoleBindings in templates/galoy-agents-proxy/.
+    create: false
+  serviceAccount:
+    create: true
+    name: "galoy-agents-proxy-k8s-mcp"
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi

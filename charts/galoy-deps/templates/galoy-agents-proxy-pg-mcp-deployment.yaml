@@ -1,0 +1,55 @@
+{{- if .Values.galoyAgentsProxy.enabled -}}
+{{- if not .Values.galoyAgentsProxy.postgresMcp.existingSecret -}}
+{{- fail "galoyAgentsProxy.postgresMcp.existingSecret is required. Provide the name of a Secret containing key DATABASE_URI." -}}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: galoy-agents-proxy-pg-mcp
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    galoy-agents-proxy/component: pg-mcp
+spec:
+  replicas: {{ .Values.galoyAgentsProxy.postgresMcp.replicas }}
+  selector:
+    matchLabels:
+      {{- include "galoy-deps.selectorLabels" . | nindent 6 }}
+      galoy-agents-proxy/component: pg-mcp
+  template:
+    metadata:
+      labels:
+        {{- include "galoy-deps.labels" . | nindent 8 }}
+        galoy-agents-proxy/component: pg-mcp
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres-mcp-server
+          image: "{{ .Values.galoyAgentsProxy.postgresMcp.image.repository }}:{{ .Values.galoyAgentsProxy.postgresMcp.image.tag }}"
+          imagePullPolicy: {{ .Values.galoyAgentsProxy.postgresMcp.image.pullPolicy }}
+          args:
+            - "--access-mode=restricted"
+            - "--transport=sse"
+            - "--sse-host=0.0.0.0"
+            - "--sse-port=8000"
+          env:
+            - name: DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.galoyAgentsProxy.postgresMcp.existingSecret }}
+                  key: DATABASE_URI
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            {{- toYaml .Values.galoyAgentsProxy.postgresMcp.resources | nindent 12 }}
+{{- end }}

@@ -1,0 +1,19 @@
+{{- if .Values.galoyAgentsProxy.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: galoy-agents-proxy-envoy
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    galoy-agents-proxy/component: envoy
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "galoy-deps.selectorLabels" . | nindent 4 }}
+    galoy-agents-proxy/component: envoy
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+{{- end }}

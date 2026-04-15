@@ -37,3 +37,7 @@ dependencies:
     repository: https://open-telemetry.github.io/opentelemetry-helm-charts
     version: 0.138.1
     condition: opentelemetry-collector.enabled
+  - name: kubernetes-mcp-server
+    repository: oci://ghcr.io/containers/charts
+    version: 0.1.0
+    condition: galoyAgentsProxy.enabled
