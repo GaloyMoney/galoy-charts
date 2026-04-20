@@ -60,3 +60,16 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Render tunnelConnector.upstreams as a TUNNEL_UPSTREAMS env value:
+  "name1=url1,name2=url2,..."
+Used by templates/tunnel-connector-deployment.yaml.
+*/}}
+{{- define "galoy-deps.tunnelConnector.upstreamsEnv" -}}
+{{- $parts := list -}}
+{{- range .Values.tunnelConnector.upstreams -}}
+{{- $parts = append $parts (printf "%s=%s" .name .url) -}}
+{{- end -}}
+{{- join "," $parts -}}
+{{- end }}

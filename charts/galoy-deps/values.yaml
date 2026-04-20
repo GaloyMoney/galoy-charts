@@ -233,3 +233,42 @@ ingress-nginx:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "10254"
+
+# Tunnel connector. Dials out over WebSocket to galoy-agents and relays
+# MCP tool calls against in-cluster MCP servers (kubernetes-mcp,
+# postgres-mcp, lana admin MCP, ...). No inbound network exposure.
+tunnelConnector:
+  enabled: false
+  image:
+    repository: us.gcr.io/galoyorg/tunnel-connector
+    # Placeholder until drua publishes a real tag — do not flip
+    # `enabled: true` until this is a concrete digest.
+    tag: edge
+    pullPolicy: IfNotPresent
+  # `wss://mcp.agents.galoy.io/tunnel/ws` in staging.
+  serverUrl: ""
+  # Stable identifier — appears in the galoy-agents tool catalog as a
+  # prefix on every tool name (e.g. `galoy_staging_kubernetes_list_pods`).
+  deploymentId: ""
+  # Name of an existing Secret in this namespace carrying a `token` key.
+  # The operator provisions this token via galoy-agents' mcp-creds UI.
+  existingTokenSecret: ""
+  # Upstream MCP servers the connector will relay to. Each entry becomes
+  # part of TUNNEL_UPSTREAMS in `name=url,name=url` form. The connector
+  # fetches the tool catalog from each at startup.
+  #
+  # Example:
+  #   upstreams:
+  #     - name: kubernetes
+  #       url: http://kubernetes-mcp-server:8080/mcp
+  #     - name: postgres
+  #       url: http://lana-bank-postgres-mcp:8000/mcp
+  upstreams: []
+  replicas: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
