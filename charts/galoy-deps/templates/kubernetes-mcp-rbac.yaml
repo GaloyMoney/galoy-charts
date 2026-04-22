@@ -1,0 +1,58 @@
+{{- if .Values.kubernetesMcp.enabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubernetes-mcp-server-read
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kubernetes-mcp-server
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - services
+      - configmaps
+      - events
+      - endpoints
+      - persistentvolumeclaims
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources:
+      - pods/log
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - statefulsets
+      - replicasets
+      - daemonsets
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+{{- range $ns := .Values.kubernetesMcp.allowedNamespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubernetes-mcp-server-read
+  namespace: {{ $ns }}
+  labels:
+    {{- include "galoy-deps.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: kubernetes-mcp-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubernetes-mcp-server-read
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes-mcp-server
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- end }}

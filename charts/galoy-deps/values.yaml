@@ -233,3 +233,41 @@ ingress-nginx:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "10254"
+
+# Read-only Kubernetes MCP server. When enabled, deploys the upstream
+# kubernetes-mcp-server chart with `--read-only` and templates one
+# RoleBinding per namespace in `allowedNamespaces`. No ClusterRoleBinding
+# is created — access is scoped to the listed namespaces only.
+kubernetesMcp:
+  enabled: false
+  # Namespaces where the MCP server's ServiceAccount gets a read-only
+  # RoleBinding. Empty = the ClusterRole is created but bound nowhere.
+  allowedNamespaces: []
+
+# Values passed through to the upstream kubernetes-mcp-server chart.
+# Only applied when kubernetesMcp.enabled=true (via the condition on the
+# dependency in Chart.yaml).
+kubernetes-mcp-server:
+  fullnameOverride: "kubernetes-mcp-server"
+  extraArgs:
+    - "--read-only"
+  ingress:
+    enabled: false
+  rbac:
+    # We template our own namespace-scoped RoleBindings in
+    # templates/kubernetes-mcp-rbac.yaml, so the subchart must not create
+    # a ClusterRoleBinding.
+    create: false
+  serviceAccount:
+    create: true
+    name: "kubernetes-mcp-server"
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
