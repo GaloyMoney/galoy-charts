@@ -36,6 +36,24 @@ rules:
     resources:
       - ingresses
     verbs: ["get", "list", "watch"]
+{{- if .Values.kubernetesMcp.clusterWide }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-mcp-server-read
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kubernetes-mcp-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubernetes-mcp-server-read
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes-mcp-server
+    namespace: {{ .Release.Namespace }}
+{{- else }}
 {{- range $ns := .Values.kubernetesMcp.allowedNamespaces }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -54,5 +72,6 @@ subjects:
   - kind: ServiceAccount
     name: kubernetes-mcp-server
     namespace: {{ $.Release.Namespace }}
+{{- end }}
 {{- end }}
 {{- end }}
