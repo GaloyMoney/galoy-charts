@@ -4,10 +4,6 @@
 #@   return data.values.docker_registry + "/galoy-deployments-pipeline"
 #@ end
 
-#@ def chain_dl_image():
-#@   return data.values.docker_registry + "/bitcoin-chain-dl"
-#@ end
-
 #@ def task_image_config():
 type: registry-image
 source:
@@ -27,34 +23,6 @@ source:
 #@ def chart_resource_name(chart):
 #@   return chart + "-chart"
 #@ end
-
-#@ def build_task(input_name, context_path):
-task: build
-config:
-  platform: linux
-  image_resource:
-    type: registry-image
-    source:
-      repository: gcr.io/kaniko-project/executor
-      tag: debug
-  inputs:
-  - name: #@ input_name
-  outputs:
-  - name: image
-  run:
-    path: /kaniko/executor
-    args:
-      - --dockerfile=Dockerfile
-      - #@ "--context=" + context_path
-      - --use-new-run
-      - --single-snapshot
-      - --cache=false
-      - --no-push
-      - --tar-path=image/image.tar
-#@ end
-
-#@ cala_charts = ["cala"]
-#@ bitcoin_charts = ["bitcoind", "bria", "fulcrum"]
 
 #@ def testflight_job(chart, deployment, vars = {}):
 name: #@ testflight_job_name(chart)
@@ -188,29 +156,4 @@ source:
     credentials: #@ data.values.staging_creds
   env:
     GOOGLE_CREDENTIALS: #@ data.values.staging_creds
-#@ end
-
-#@ def repo_out_resource(repo_name):
-name: #@ repo_out_resource_name(repo_name)
-type: git
-source:
-  uri: #@ data.values.git_org_uri + "/" + repo_name + ".git"
-  private_key: #@ data.values.github_private_key
-#@ end
-
-#@ def repo_out_resource_name(repo_name):
-#@   return repo_name + "-repo-out"
-#@ end
-
-#@ def repo_resource(repo_name):
-name: #@ repo_resource_name(repo_name)
-type: git
-source:
-  uri: #@ data.values.git_org_uri + "/" + repo_name + ".git"
-  private_key: #@ data.values.github_private_key
-  branch: main
-#@ end
-
-#@ def repo_resource_name(repo_name):
-#@   return repo_name + "-repo"
 #@ end

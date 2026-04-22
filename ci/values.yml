@@ -2,12 +2,8 @@
 ---
 deployments_git_uri: git@github.com:GaloyMoney/galoy-deployments.git
 deployments_git_branch: main
-git_lnd_sidecar_bot_branch: bot-bump-lnd-sidecar-image
-git_mongo_backup_bot_branch: bot-bump-mongo-backup-image
-git_org_uri: git@github.com:GaloyMoney
 git_uri: git@github.com:GaloyMoney/galoy-charts.git
 git_branch: main
-gates_branch: cepler-gates
 github_private_key: ((github.private_key))
 github_token: ((github.api_token))
 github_app_id: ((github.github_app_id))
@@ -15,10 +11,6 @@ github_app_private_key: ((github.github_app_private_key))
 docker_registry: us.gcr.io/galoyorg
 gar_registry_user: ((gar-creds.username))
 gar_registry_password: ((gar-creds.password))
-testflight_backups_creds: ((testflight-backups-bucket.creds_json))
-testflight_okex_secret_key: ((testflight-okex.secret_key))
-testflight_okex_passphrase: ((testflight-okex.passphrase))
-testflight_okex_api_key: ((testflight-okex.api_key))
 staging_worker_tag: galoy-staging
 staging_smoketest_kubeconfig: ((staging-smoketest.kubeconfig))
 staging_state_bucket: "galoystaging-tf-state"
