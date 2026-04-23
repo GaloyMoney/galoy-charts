@@ -234,30 +234,86 @@ ingress-nginx:
           prometheus.io/scrape: "true"
           prometheus.io/port: "10254"
 
-# Read-only Kubernetes MCP server. When enabled, deploys the upstream
-# kubernetes-mcp-server chart with `--read-only` and templates one
-# RoleBinding per namespace in `allowedNamespaces`. No ClusterRoleBinding
-# is created — access is scoped to the listed namespaces only.
+# Read-only Kubernetes MCP server. Single toggle — RBAC, role rules,
+# and bindings are all configured through the upstream subchart's
+# `rbac.extra*` arrays below.
 kubernetesMcp:
   enabled: false
-  # Namespaces where the MCP server's ServiceAccount gets a read-only
-  # RoleBinding. Empty = the ClusterRole is created but bound nowhere.
-  allowedNamespaces: []
 
 # Values passed through to the upstream kubernetes-mcp-server chart.
-# Only applied when kubernetesMcp.enabled=true (via the condition on the
-# dependency in Chart.yaml).
+# Only applied when kubernetesMcp.enabled=true (via the condition on
+# the dependency in Chart.yaml).
 kubernetes-mcp-server:
   fullnameOverride: "kubernetes-mcp-server"
   extraArgs:
     - "--read-only"
   ingress:
     enabled: false
+  # Drive RBAC entirely from the upstream chart's `extra*` arrays rather
+  # than hand-rolling ClusterRole/Binding templates. One ClusterRole
+  # carrying every read verb the MCP's tools need, and one
+  # ClusterRoleBinding to the MCP's ServiceAccount — cluster-wide read,
+  # nothing else. Downstream deployments can narrow this via a values
+  # overlay (e.g. swap the ClusterRoleBinding for per-namespace
+  # RoleBindings) without modifying the chart.
   rbac:
-    # We template our own namespace-scoped RoleBindings in
-    # templates/kubernetes-mcp-rbac.yaml, so the subchart must not create
-    # a ClusterRoleBinding.
-    create: false
+    create: true
+    extraClusterRoles:
+      - name: read
+        rules:
+          - apiGroups: [""]
+            resources:
+              - pods
+              - services
+              - configmaps
+              - events
+              - endpoints
+              - persistentvolumeclaims
+              - namespaces
+              - nodes
+            verbs: ["get", "list", "watch"]
+          - apiGroups: [""]
+            resources:
+              - pods/log
+            verbs: ["get", "list"]
+          - apiGroups: ["apps"]
+            resources:
+              - deployments
+              - statefulsets
+              - replicasets
+              - daemonsets
+            verbs: ["get", "list", "watch"]
+          - apiGroups: ["batch"]
+            resources:
+              - jobs
+              - cronjobs
+            verbs: ["get", "list", "watch"]
+          - apiGroups: ["networking.k8s.io"]
+            resources:
+              - ingresses
+            verbs: ["get", "list", "watch"]
+          # Newer events API (Kubernetes 1.19+). The core `""`.events
+          # entry above covers the legacy shape; some components emit
+          # only to this group.
+          - apiGroups: ["events.k8s.io"]
+            resources:
+              - events
+            verbs: ["get", "list", "watch"]
+          # Metrics API — needed for `pods_top` / `nodes_top`.
+          # `metrics.k8s.io` is served by metrics-server, exposes
+          # aggregated CPU/memory only.
+          - apiGroups: ["metrics.k8s.io"]
+            resources:
+              - pods
+              - nodes
+            verbs: ["get", "list"]
+    extraClusterRoleBindings:
+      - name: read
+        roleRef:
+          kind: ClusterRole
+          name: read
+        # `subjects` defaults to the MCP's ServiceAccount via the
+        # subchart's template — no override needed.
   serviceAccount:
     create: true
     name: "kubernetes-mcp-server"
