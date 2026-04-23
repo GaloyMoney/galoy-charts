@@ -271,3 +271,61 @@ kubernetes-mcp-server:
     limits:
       cpu: 200m
       memory: 256Mi
+
+# Tunnel connector. Outbound WebSocket to drua that relays MCP tool
+# calls against in-cluster MCP servers (kubernetes-mcp, postgres-mcp,
+# lana admin MCP, ...). No inbound network exposure in this cluster —
+# only the outbound WSS connection is used.
+#
+# Typical rollout: enable alongside `kubernetesMcp.enabled=true`, add
+# the kubernetes upstream to `upstreams`, add further upstreams as
+# their MCP services come online (postgres-mcp, lana admin MCP, etc).
+tunnelConnector:
+  enabled: false
+  image:
+    repository: us.gcr.io/galoyorg/tunnel-connector
+    # Fallback tag, used only when `digest` is empty. The auto-bump job
+    # in ci/pipeline.yml watches `:edge` and pins `digest` below on each
+    # drua push, so `tag` is effectively only consulted on first-deploy
+    # before the bot has ever run.
+    tag: edge
+    # Pinned image digest (e.g. `sha256:abc…`). When non-empty the
+    # Deployment uses `<repo>@<digest>` instead of `<repo>:<tag>`, which
+    # means a CI push can't silently roll a running release. Kept empty
+    # in-repo and set by the `bump-tunnel-connector-image` bot PR.
+    digest: ""
+    pullPolicy: IfNotPresent
+  # Drua tunnel WebSocket URL, e.g. `wss://mcp.agents.galoy.io/tunnel/ws`
+  # in staging. Must accept a WS upgrade at `/tunnel/ws`.
+  serverUrl: ""
+  # Stable identifier — appears in drua's tool catalog as a prefix on
+  # every tool name (e.g. `galoy_staging_kubernetes_list_pods`). Also
+  # the key drua's TunnelRegistry uses to enforce single-live-tunnel
+  # per deployment, so keep it distinct per release.
+  deploymentId: ""
+  # Name of an existing Secret in this namespace carrying a `token` key.
+  # The operator provisions this via drua's mcp-creds UI with
+  # `tunnel_deployment_id` set to match `deploymentId` above; drua will
+  # refuse registration if the scope doesn't match.
+  existingTokenSecret: ""
+  # Upstream MCP servers the connector will relay to. Each entry becomes
+  # part of TUNNEL_UPSTREAMS in `name=url,name=url` form. The connector
+  # fetches the tool catalog from each at startup; if any upstream is
+  # unreachable the whole registration retries with exponential backoff.
+  #
+  # Default: just the in-cluster kubernetes-mcp-server (enabled via
+  # `kubernetesMcp.enabled=true`). Deployment-level values (e.g. in
+  # galoy-deployments) add postgres / lana MCPs on top by overriding
+  # this list in full — helm `upstreams:` is an atomic replacement, not
+  # a merge.
+  upstreams:
+    - name: kubernetes
+      url: http://kubernetes-mcp-server:8080/mcp
+  replicas: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

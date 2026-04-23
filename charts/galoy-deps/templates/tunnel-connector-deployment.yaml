@@ -1,0 +1,62 @@
+{{- if .Values.tunnelConnector.enabled -}}
+{{- if not .Values.tunnelConnector.serverUrl }}
+{{- fail "tunnelConnector.serverUrl is required when tunnelConnector.enabled=true" }}
+{{- end }}
+{{- if not .Values.tunnelConnector.deploymentId }}
+{{- fail "tunnelConnector.deploymentId is required when tunnelConnector.enabled=true" }}
+{{- end }}
+{{- if not .Values.tunnelConnector.existingTokenSecret }}
+{{- fail "tunnelConnector.existingTokenSecret is required when tunnelConnector.enabled=true" }}
+{{- end }}
+{{- if not .Values.tunnelConnector.upstreams }}
+{{- fail "tunnelConnector.upstreams must list at least one {name, url} entry" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tunnel-connector
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tunnel-connector
+spec:
+  replicas: {{ .Values.tunnelConnector.replicas }}
+  selector:
+    matchLabels:
+      {{- include "galoy-deps.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: tunnel-connector
+  template:
+    metadata:
+      labels:
+        {{- include "galoy-deps.labels" . | nindent 8 }}
+        app.kubernetes.io/component: tunnel-connector
+    spec:
+      containers:
+        - name: connector
+          {{- /*
+            Prefer digest pinning when present (set by the auto-bump job in
+            ci/pipeline.yml). Falls back to the mutable `tag` for local
+            dev / initial deploy before the bot has run.
+          */}}
+          {{- if .Values.tunnelConnector.image.digest }}
+          image: "{{ .Values.tunnelConnector.image.repository }}@{{ .Values.tunnelConnector.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.tunnelConnector.image.repository }}:{{ .Values.tunnelConnector.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.tunnelConnector.image.pullPolicy }}
+          env:
+            - name: TUNNEL_SERVER_URL
+              value: {{ .Values.tunnelConnector.serverUrl | quote }}
+            - name: TUNNEL_DEPLOYMENT_ID
+              value: {{ .Values.tunnelConnector.deploymentId | quote }}
+            - name: TUNNEL_UPSTREAMS
+              value: {{ include "galoy-deps.tunnelConnector.upstreamsEnv" . | quote }}
+            - name: TUNNEL_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.tunnelConnector.existingTokenSecret }}
+                  key: token
+            - name: RUST_LOG
+              value: "info"
+          resources:
+            {{- toYaml .Values.tunnelConnector.resources | nindent 12 }}
+{{- end }}
