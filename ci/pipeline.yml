@@ -3,6 +3,7 @@
 #@   "testflight_job",
 #@   "bump_in_deployments_job",
 #@   "chart_repo_resource",
+#@   "task_image_config",
 #@   "testflight_tf_resource")
 
 groups:
@@ -10,10 +11,56 @@ groups:
   jobs:
   - galoy-deps-testflight
   - bump-galoy-deps-in-deployments
+  - bump-tunnel-connector-image
 
 jobs:
 - #@ testflight_job("galoy-deps", "galoy-deps")
 - #@ bump_in_deployments_job("galoy-deps")
+
+#! Watches the `tunnel-connector:edge` image pushed by drua CI and opens
+#! (or force-updates) a PR pinning the latest digest in
+#! `charts/galoy-deps/values.yaml`. Using a digest instead of the mutable
+#! `:edge` tag means a drua CI push doesn't silently roll any deployed
+#! connector — the bump is an auditable PR instead.
+- name: bump-tunnel-connector-image
+  plan:
+  - in_parallel:
+    - get: tunnel-connector-image
+      trigger: true
+      params: { skip_download: true }
+    - get: charts-repo
+    - get: pipeline-tasks
+  - task: update-digest
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: tunnel-connector-image
+      - name: charts-repo
+      - name: pipeline-tasks
+      outputs:
+      - name: charts-repo
+      run:
+        path: pipeline-tasks/ci/tasks/bump-tunnel-connector-image.sh
+  - put: bump-tunnel-connector-image-bot-branch
+    params:
+      repository: charts-repo
+      branch: bump-tunnel-connector-image-bot-branch
+      force: true
+  - task: open-bump-pr
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      params:
+        GH_APP_ID: #@ data.values.github_app_id
+        GH_APP_PRIVATE_KEY: #@ data.values.github_app_private_key
+        BRANCH: #@ data.values.git_branch
+        BOT_BRANCH: bump-tunnel-connector-image-bot-branch
+      inputs:
+      - name: pipeline-tasks
+      - name: charts-repo
+      run:
+        path: pipeline-tasks/ci/tasks/open-bump-tunnel-connector-image-pr.sh
 
 resources:
 - #@ chart_repo_resource("galoy-deps")
@@ -39,6 +86,21 @@ resources:
   source:
     uri: #@ data.values.deployments_git_uri
     branch: #@ data.values.deployments_git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: tunnel-connector-image
+  type: registry-image
+  source:
+    repository: #@ data.values.docker_registry + "/tunnel-connector"
+    tag: edge
+    username: #@ data.values.gar_registry_user
+    password: #@ data.values.gar_registry_password
+
+- name: bump-tunnel-connector-image-bot-branch
+  type: git
+  source:
+    uri: #@ data.values.git_uri
+    branch: bump-tunnel-connector-image-bot-branch
     private_key: #@ data.values.github_private_key
 
 resource_types:
