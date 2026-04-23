@@ -359,11 +359,13 @@ tunnelConnector:
   # the key drua's TunnelRegistry uses to enforce single-live-tunnel
   # per deployment, so keep it distinct per release.
   deploymentId: ""
-  # Name of an existing Secret in this namespace carrying a `token` key.
-  # The operator provisions this via drua's mcp-creds UI with
-  # `tunnel_deployment_id` set to match `deploymentId` above; drua will
-  # refuse registration if the scope doesn't match.
-  existingTokenSecret: ""
+  # Name of an existing Secret in this namespace carrying a PKCS#8 PEM
+  # Ed25519 private key under the `private_key.pem` key. Mounted read-only
+  # at /var/run/secrets/tunnel-connector/private_key.pem; the connector
+  # signs the handshake with it. The matching public key lives in drua's
+  # `server.tunnel.deployments.<deploymentId>` config — drua rejects the
+  # upgrade if the signature doesn't verify.
+  existingPrivateKeySecret: ""
   # Upstream MCP servers the connector will relay to. Each entry becomes
   # part of TUNNEL_UPSTREAMS in `name=url,name=url` form. The connector
   # fetches the tool catalog from each at startup; if any upstream is

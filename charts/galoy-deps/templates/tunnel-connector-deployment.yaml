@@ -5,8 +5,8 @@
 {{- if not .Values.tunnelConnector.deploymentId }}
 {{- fail "tunnelConnector.deploymentId is required when tunnelConnector.enabled=true" }}
 {{- end }}
-{{- if not .Values.tunnelConnector.existingTokenSecret }}
-{{- fail "tunnelConnector.existingTokenSecret is required when tunnelConnector.enabled=true" }}
+{{- if not .Values.tunnelConnector.existingPrivateKeySecret }}
+{{- fail "tunnelConnector.existingPrivateKeySecret is required when tunnelConnector.enabled=true" }}
 {{- end }}
 {{- if not .Values.tunnelConnector.upstreams }}
 {{- fail "tunnelConnector.upstreams must list at least one {name, url} entry" }}
@@ -50,13 +50,21 @@ spec:
               value: {{ .Values.tunnelConnector.deploymentId | quote }}
             - name: TUNNEL_UPSTREAMS
               value: {{ include "galoy-deps.tunnelConnector.upstreamsEnv" . | quote }}
-            - name: TUNNEL_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.tunnelConnector.existingTokenSecret }}
-                  key: token
+            - name: TUNNEL_PRIVATE_KEY_FILE
+              value: /var/run/secrets/tunnel-connector/private_key.pem
             - name: RUST_LOG
               value: "info"
+          volumeMounts:
+            - name: private-key
+              mountPath: /var/run/secrets/tunnel-connector
+              readOnly: true
           resources:
             {{- toYaml .Values.tunnelConnector.resources | nindent 12 }}
+      volumes:
+        - name: private-key
+          secret:
+            secretName: {{ .Values.tunnelConnector.existingPrivateKeySecret }}
+            items:
+              - key: private_key.pem
+                path: private_key.pem
 {{- end }}
