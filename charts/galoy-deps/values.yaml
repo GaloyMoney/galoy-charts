@@ -6,24 +6,23 @@ kubemonkey:
   enabled: true
   fullnameOverride: kubemonkey
   resources: {}
-
 opentelemetry-collector:
   image:
     repository: "otel/opentelemetry-collector-k8s"
   service:
     enabled: true
   extraEnvs:
-  - name: K8S_NODE_NAME
-    valueFrom:
-      fieldRef:
-        fieldPath: spec.nodeName
+    - name: K8S_NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
   enabled: true
   clusterRole:
     create: true
     rules:
-    - apiGroups: [""]
-      resources: ["nodes/stats"]
-      verbs: ["get"]
+      - apiGroups: [""]
+        resources: ["nodes/stats"]
+        verbs: ["get"]
   resources: {}
   mode: daemonset
   config:
@@ -40,72 +39,72 @@ opentelemetry-collector:
       batch: {}
       tail_sampling:
         policies:
-        - name: status_code
-          type: status_code
-          status_code:
-            status_codes: [ERROR]
-        - name: probabilistic
-          type: probabilistic
-          probabilistic: { sampling_percentage: 100 }
+          - name: status_code
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: probabilistic
+            type: probabilistic
+            probabilistic: {sampling_percentage: 100}
       attributes:
         actions:
-        - key: graphql.variables.input.code
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.code
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.token
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.cookie
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.authToken
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.totpCode
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.body
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.macaroon
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.cert
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.secret
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.rawHeaders
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.key
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.value
-          action: update
-          value: "<redacted>"
-        - key: args
-          action: update
-          value: "<redacted>"
-        - key: graphql.variables.input.jwt
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.jwt
-          action: update
-          value: "<redacted>"
-        - key: code.function.params.password
-          action: update
-          value: "<redacted>"
-        - key: graphql.variables.input.totpCode
-          action: update
-          value: "<redacted>"
-        - key: graphql.variables.input.authToken
-          action: update
-          value: "<redacted>"
+          - key: graphql.variables.input.code
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.code
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.token
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.cookie
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.authToken
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.totpCode
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.body
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.macaroon
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.cert
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.secret
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.rawHeaders
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.key
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.value
+            action: update
+            value: "<redacted>"
+          - key: args
+            action: update
+            value: "<redacted>"
+          - key: graphql.variables.input.jwt
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.jwt
+            action: update
+            value: "<redacted>"
+          - key: code.function.params.password
+            action: update
+            value: "<redacted>"
+          - key: graphql.variables.input.totpCode
+            action: update
+            value: "<redacted>"
+          - key: graphql.variables.input.authToken
+            action: update
+            value: "<redacted>"
       # Default memory limiter configuration for the collector based on k8s resource limits.
       memory_limiter:
         # check_interval is the time between measurements of memory usage.
@@ -204,13 +203,11 @@ opentelemetry-collector:
       servicePort: 14268
       hostPort: 14268
       protocol: TCP
-
 cert-manager:
   enabled: true
   crds:
-   enabled: true
+    enabled: true
   resources: {}
-
 ingress-nginx:
   enabled: true
   controller:
@@ -233,13 +230,11 @@ ingress-nginx:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "10254"
-
 # Read-only Kubernetes MCP server. Single toggle — RBAC, role rules,
 # and bindings are all configured through the upstream subchart's
 # `rbac.extra*` arrays below.
 kubernetesMcp:
   enabled: false
-
 # Values passed through to the upstream kubernetes-mcp-server chart.
 # Only applied when kubernetesMcp.enabled=true (via the condition on
 # the dependency in Chart.yaml).
@@ -312,8 +307,8 @@ kubernetes-mcp-server:
         roleRef:
           kind: ClusterRole
           name: read
-        # `subjects` defaults to the MCP's ServiceAccount via the
-        # subchart's template — no override needed.
+          # `subjects` defaults to the MCP's ServiceAccount via the
+          # subchart's template — no override needed.
   serviceAccount:
     create: true
     name: "kubernetes-mcp-server"
@@ -327,7 +322,6 @@ kubernetes-mcp-server:
     limits:
       cpu: 200m
       memory: 256Mi
-
 # Tunnel connector. Outbound WebSocket to drua that relays MCP tool
 # calls against in-cluster MCP servers (kubernetes-mcp, postgres-mcp,
 # lana admin MCP, ...). No inbound network exposure in this cluster —
@@ -349,7 +343,7 @@ tunnelConnector:
     # Deployment uses `<repo>@<digest>` instead of `<repo>:<tag>`, which
     # means a CI push can't silently roll a running release. Kept empty
     # in-repo and set by the `bump-tunnel-connector-image` bot PR.
-    digest: ""
+    digest: "sha256:060a9fc829e110c873a900fb6d5b04c2fff24bb0cc601c07115a0a3acdf27ea8"
     pullPolicy: IfNotPresent
   # Drua tunnel WebSocket URL, e.g. `wss://mcp.agents.galoy.io/tunnel/ws`
   # in staging. Must accept a WS upgrade at `/tunnel/ws`.
