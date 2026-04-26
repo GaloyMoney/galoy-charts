@@ -355,7 +355,7 @@ tunnelConnector:
   # in staging. Must accept a WS upgrade at `/tunnel/ws`.
   serverUrl: ""
   # Stable identifier — appears in drua's tool catalog as a prefix on
-  # every tool name (e.g. `galoy_staging_kubernetes_list_pods`). Also
+  # every tool name (e.g. `galoy_staging_k8s_list_pods`). Also
   # the key drua's TunnelRegistry uses to enforce single-live-tunnel
   # per deployment, so keep it distinct per release.
   deploymentId: ""
@@ -377,7 +377,7 @@ tunnelConnector:
   # this list in full — helm `upstreams:` is an atomic replacement, not
   # a merge.
   upstreams:
-    - name: kubernetes
+    - name: k8s
       url: http://kubernetes-mcp-server:8080/mcp
   replicas: 1
   resources:
