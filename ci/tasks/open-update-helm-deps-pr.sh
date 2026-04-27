@@ -4,6 +4,12 @@ set -eu
 
 pushd charts-repo
 
+# If bot branch has no commits ahead of base, chart is already up to date
+if [ -z "$(git log ${BRANCH}..HEAD --oneline)" ]; then
+  echo "No changes to propose — chart already up to date."
+  exit 0
+fi
+
 cat <<EOF >> ../body.md
 This PR updates Helm Chart Dependencies.
 EOF
