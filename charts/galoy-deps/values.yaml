@@ -343,7 +343,7 @@ tunnelConnector:
     # Deployment uses `<repo>@<digest>` instead of `<repo>:<tag>`, which
     # means a CI push can't silently roll a running release. Kept empty
     # in-repo and set by the `bump-tunnel-connector-image` bot PR.
-    digest: "sha256:060a9fc829e110c873a900fb6d5b04c2fff24bb0cc601c07115a0a3acdf27ea8"
+    digest: "sha256:e78066356cded1d83d71165ae4423a800f955d2475765762d4ca3710ad0551d9"
     pullPolicy: IfNotPresent
   # Drua tunnel WebSocket URL, e.g. `wss://mcp.agents.galoy.io/tunnel/ws`
   # in staging. Must accept a WS upgrade at `/tunnel/ws`.
