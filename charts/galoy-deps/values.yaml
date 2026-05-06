@@ -230,6 +230,12 @@ ingress-nginx:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "10254"
+gotenberg:
+  enabled: false
+  fullnameOverride: gotenberg
+  replicaCount: 1
+  service:
+    port: 3000
 # Read-only Kubernetes MCP server. Single toggle — RBAC, role rules,
 # and bindings are all configured through the upstream subchart's
 # `rbac.extra*` arrays below.
