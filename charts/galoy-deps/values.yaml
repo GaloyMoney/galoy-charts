@@ -236,6 +236,9 @@ gotenberg:
   replicaCount: 1
   service:
     port: 3000
+  chromium:
+    autoStart: true
+    startTimeout: 60s
 # Read-only Kubernetes MCP server. Single toggle — RBAC, role rules,
 # and bindings are all configured through the upstream subchart's
 # `rbac.extra*` arrays below.
