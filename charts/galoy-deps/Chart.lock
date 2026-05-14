@@ -10,12 +10,12 @@ dependencies:
   version: 1.5.2
 - name: opentelemetry-collector
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
-  version: 0.138.1
+  version: 0.154.0
 - name: gotenberg
   repository: https://maikumori.github.io/helm-charts/
   version: 1.21.0
 - name: kubernetes-mcp-server
   repository: oci://ghcr.io/containers/charts
   version: 0.1.0
-digest: sha256:6eb495995a055a0dea1eeae517fc68422336a0b99a292b278ee3ce868820b8f3
-generated: "2026-05-06T15:37:29.263124-04:00"
+digest: sha256:0dddf05e799813e808e641082f285e856ea248760e66defae260e9ddf884dc6c
+generated: "2026-05-13T14:25:09.57027228Z"
