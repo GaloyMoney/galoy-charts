@@ -17,5 +17,8 @@ dependencies:
 - name: kubernetes-mcp-server
   repository: oci://ghcr.io/containers/charts
   version: 0.1.0
-digest: sha256:9a45876c95610b5303c0d94c39c4369e930b0c8777ecd5fedf5a73879cbfe9d5
-generated: "2026-05-15T18:11:49.006286155Z"
+- name: keycloakx
+  repository: https://codecentric.github.io/helm-charts
+  version: 7.1.11
+digest: sha256:7b8a322be8767ac4054798a797a776f88099945872738d8c19618f53b5ed4c07
+generated: "2026-05-18T14:42:09.570590775+05:30"

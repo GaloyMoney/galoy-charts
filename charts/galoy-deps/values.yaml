@@ -244,6 +244,21 @@ gotenberg:
 # `rbac.extra*` arrays below.
 kubernetesMcp:
   enabled: false
+keycloak:
+  enabled: true
+  statefulsetLabels: {}
+  podLabels: {}
+  http:
+    relativePath: "/"
+  command:
+    - "/opt/keycloak/bin/kc.sh"
+    - "start"
+    - "--http-port=8080"
+    - "--hostname-strict=false"
+  extraEnv: |
+    - name: JAVA_OPTS_APPEND
+      value: >-
+        -Djgroups.dns.query={{ .Release.Name }}-keycloak-headless
 # Values passed through to the upstream kubernetes-mcp-server chart.
 # Only applied when kubernetesMcp.enabled=true (via the condition on
 # the dependency in Chart.yaml).
