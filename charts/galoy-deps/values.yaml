@@ -244,6 +244,7 @@ gotenberg:
 # `rbac.extra*` arrays below.
 kubernetesMcp:
   enabled: false
+
 keycloak:
   enabled: true
   statefulsetLabels: {}
@@ -259,6 +260,41 @@ keycloak:
     - name: JAVA_OPTS_APPEND
       value: >-
         -Djgroups.dns.query={{ .Release.Name }}-keycloak-headless
+
+keycloakMcp:
+  enabled: false
+  image:
+    repository: us.gcr.io/galoyorg/keycloak-mcp
+    tag: edge
+    digest: ""
+    pullPolicy: IfNotPresent
+  # Internal Keycloak URL, e.g.
+  # http://keycloak-http.galoy-staging-keycloak.svc.cluster.local
+  keycloakBaseUrl: ""
+  # Leave empty to acquire tokens in the target realm. Set only if a
+  # deliberate cross-realm admin client is used.
+  tokenRealm: ""
+  clientId: keycloak-mcp
+  # Existing Secret with the confidential client secret used for
+  # Keycloak Admin REST access.
+  existingSecret: ""
+  clientSecretKey: client-secret
+  realms:
+    - internal
+    - customer
+  # Optional normalized declared snapshot used by diff_declared. Keep
+  # empty until deployment tooling writes a canonical Keycloak snapshot.
+  declaredSnapshot: {}
+  service:
+    port: 8000
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
 # Values passed through to the upstream kubernetes-mcp-server chart.
 # Only applied when kubernetesMcp.enabled=true (via the condition on
 # the dependency in Chart.yaml).

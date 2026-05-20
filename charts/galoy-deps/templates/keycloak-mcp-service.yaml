@@ -1,0 +1,18 @@
+{{- if .Values.keycloakMcp.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-mcp
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-mcp
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "galoy-deps.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-mcp
+  ports:
+    - name: http
+      port: {{ .Values.keycloakMcp.service.port }}
+      targetPort: http
+{{- end }}
