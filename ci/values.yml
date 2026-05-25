@@ -12,6 +12,5 @@ docker_registry: us.gcr.io/galoyorg
 gar_registry_user: ((gar-creds.username))
 gar_registry_password: ((gar-creds.password))
 staging_worker_tag: galoy-staging
-staging_smoketest_kubeconfig: ((staging-smoketest.kubeconfig))
 staging_state_bucket: "galoystaging-tf-state"
 staging_creds: ((staging-gcp-creds.creds_json))
