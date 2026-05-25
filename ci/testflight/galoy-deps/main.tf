@@ -8,6 +8,8 @@ locals {
   testflight_namespace         = var.testflight_namespace
   service_name                 = "${local.testflight_namespace}-ingress"
   jaeger_host                  = "galoy-deps-opentelemetry-collector"
+  cert_manager_fullname        = "${local.testflight_namespace}-cert-manager"
+  ingress_nginx_fullname       = "${local.testflight_namespace}-ingress-nginx"
   kubemonkey_fullname_override = local.testflight_namespace
 }
 
@@ -26,6 +28,8 @@ resource "helm_release" "galoy_deps" {
     templatefile("${path.module}/testflight-values.yml.tmpl", {
       service_name : local.service_name
       jaeger_host : local.jaeger_host
+      cert_manager_fullname : local.cert_manager_fullname
+      ingress_nginx_fullname : local.ingress_nginx_fullname
       kubemonkey_fullname_override : local.kubemonkey_fullname_override
     })
   ]
