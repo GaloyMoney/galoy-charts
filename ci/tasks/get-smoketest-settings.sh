@@ -1,15 +1,17 @@
 #!/bin/bash
 
-set -eu
+set -euo pipefail
 
 mkdir -p .kube
 export KUBECONFIG=$(pwd)/.kube/config
-echo ${SMOKETEST_KUBECONFIG} | base64 --decode > ${KUBECONFIG} || true
+printf '%s' "${SMOKETEST_KUBECONFIG}" | base64 --decode > "${KUBECONFIG}"
 
-kubectl get secret ${SMOKETEST_SECRET:-$(cat testflight/env_name)} -o json \
-  | jq -r '.data' > ${OUT}/data.json
+secret_name="${SMOKETEST_SECRET:-$(cat testflight/env_name)}"
 
-cat <<EOF > ${OUT}/helpers.sh
+kubectl get secret "${secret_name}" -o json \
+  | jq -r '.data' > "${OUT}/data.json"
+
+cat <<EOF > "${OUT}/helpers.sh"
 function setting() {
   cat smoketest-settings/data.json | jq -r ".\$1" | base64 --decode
 }
