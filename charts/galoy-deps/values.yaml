@@ -230,6 +230,26 @@ ingress-nginx:
         annotations:
           prometheus.io/scrape: "true"
           prometheus.io/port: "10254"
+traefik:
+  enabled: false
+  fullnameOverride: traefik
+  gateway:
+    enabled: false
+  ingressClass:
+    enabled: true
+    isDefaultClass: false
+    name: traefik
+  providers:
+    kubernetesCRD:
+      enabled: true
+    kubernetesIngress:
+      enabled: true
+      ingressClass: traefik
+      publishedService:
+        enabled: true
+  service:
+    spec:
+      type: LoadBalancer
 gotenberg:
   enabled: false
   fullnameOverride: gotenberg

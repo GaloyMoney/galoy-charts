@@ -5,6 +5,9 @@ dependencies:
 - name: ingress-nginx
   repository: https://kubernetes.github.io/ingress-nginx
   version: 4.15.1
+- name: traefik
+  repository: https://traefik.github.io/charts
+  version: 40.2.0
 - name: kube-monkey
   repository: https://asobti.github.io/kube-monkey/charts/repo
   version: 1.5.2
@@ -20,5 +23,5 @@ dependencies:
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 7.1.11
-digest: sha256:84cf1a4c3d0cb586f780f49c7a9cc1927218d5f9b3199c528f2b06121279b4e5
-generated: "2026-05-25T18:18:36.980824+02:00"
+digest: sha256:a7ad906d87049b2a19bd541dff36095886719d9a60ec51ab78ec2c23b8ce830f
+generated: "2026-05-25T22:10:09.22004866+05:30"
