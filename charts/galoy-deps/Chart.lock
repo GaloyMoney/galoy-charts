@@ -10,7 +10,7 @@ dependencies:
   version: 1.5.2
 - name: opentelemetry-collector
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
-  version: 0.156.2
+  version: 0.157.1
 - name: gotenberg
   repository: https://maikumori.github.io/helm-charts/
   version: 1.21.0
@@ -20,5 +20,5 @@ dependencies:
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 7.2.0
-digest: sha256:ec0a0262ff7c68b1a958dd662988f8ce4bea8561bb3b423e4528052c9e118f9f
-generated: "2026-05-27T18:27:19.615798183+05:30"
+digest: sha256:e97e8b0c5347252a2a8f21252dfa993351f97e74d38a40d023ead24743c2fc3b
+generated: "2026-05-28T15:23:23.976701477Z"
