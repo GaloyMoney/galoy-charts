@@ -308,6 +308,12 @@ kubernetes-mcp-server:
             resources:
               - ingresses
             verbs: ["get", "list", "watch"]
+          # Traefik CRDs — needed to inspect middleware wiring such as
+          # rateLimit and inFlightReq attached to ingress routers.
+          - apiGroups: ["traefik.io"]
+            resources:
+              - middlewares
+            verbs: ["get", "list", "watch"]
           # Newer events API (Kubernetes 1.19+). The core `""`.events
           # entry above covers the legacy shape; some components emit
           # only to this group.
