@@ -115,7 +115,7 @@ source:
 
 #@ def testflight_tf_resource(chart_name):
 name: #@ "tf-" + chart_name + "-testflight"
-type: terraform
+type: tofu
 source:
   backend_type: gcs
   backend_config:
