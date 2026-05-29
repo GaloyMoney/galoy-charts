@@ -42,7 +42,7 @@ resources:
     private_key: #@ data.values.github_private_key
 
 resource_types:
-- name: terraform
+- name: tofu
   type: registry-image
   source:
     repository: #@ data.values.docker_registry + "/tofu-resource"
