@@ -3,6 +3,11 @@ kubemonkey:
 cert-manager:
   crds:
    enabled: false
+traefik:
+  ingressClass:
+    enabled: false
+  rbac:
+    namespaced: true
 opentelemetry-collector:
   clusterRole:
     create: false
