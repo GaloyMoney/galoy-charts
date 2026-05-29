@@ -45,7 +45,7 @@ resource_types:
 - name: terraform
   type: registry-image
   source:
-    repository: #@ data.values.docker_registry + "/terraform-resource"
+    repository: #@ data.values.docker_registry + "/tofu-resource"
     tag: latest
     username: #@ data.values.gar_registry_user
     password: #@ data.values.gar_registry_password
