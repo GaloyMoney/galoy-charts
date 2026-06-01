@@ -1,8 +1,6 @@
 #@ load("@ytt:data", "data")
 #@ load("pipeline-fragments.lib.yml",
 #@   "testflight_job",
-#@   "lint_job",
-#@   "lint_job_name",
 #@   "bump_in_deployments_job",
 #@   "chart_repo_resource",
 #@   "testflight_tf_resource")
@@ -12,20 +10,13 @@ groups:
   jobs:
   - galoy-deps-testflight
   - bump-galoy-deps-in-deployments
-- name: galoy-gitops
-  jobs:
-  - galoy-gitops-lint
-  - bump-galoy-gitops-in-deployments
 
 jobs:
 - #@ testflight_job("galoy-deps", "galoy-deps")
 - #@ bump_in_deployments_job("galoy-deps")
-- #@ lint_job("galoy-gitops")
-- #@ bump_in_deployments_job("galoy-gitops", lint_job_name("galoy-gitops"))
 
 resources:
 - #@ chart_repo_resource("galoy-deps")
-- #@ chart_repo_resource("galoy-gitops")
 - #@ testflight_tf_resource("galoy-deps")
 
 - name: charts-repo

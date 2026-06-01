@@ -16,10 +16,6 @@ source:
 #@  return chart + "-testflight"
 #@ end
 
-#@ def lint_job_name(chart):
-#@  return chart + "-lint"
-#@ end
-
 #@ def bump_in_deployments_job_name(chart):
 #@  return "bump-" + chart + "-in-deployments"
 #@ end
@@ -69,39 +65,13 @@ plan:
   get_params: { action: destroy }
 #@ end
 
-#@ def lint_job(chart):
-name: #@ lint_job_name(chart)
-plan:
-- in_parallel:
-  - get: #@ chart_resource_name(chart)
-    trigger: true
-  - { get: pipeline-tasks }
-- task: helm-lint
-  config:
-    platform: linux
-    image_resource: #@ task_image_config()
-    inputs:
-    - name: #@ chart_resource_name(chart)
-      path: repo
-    params:
-      CHART: #@ chart
-    run:
-      path: sh
-      args:
-      - -ceu
-      - |
-        helm dependency update "repo/charts/${CHART}"
-        helm lint "repo/charts/${CHART}"
-#@ end
-
-#@ def bump_in_deployments_job(chart, passed_job = ""):
-#@ passed = passed_job if passed_job != "" else testflight_job_name(chart)
+#@ def bump_in_deployments_job(chart):
 name: #@ "bump-" + chart + "-in-deployments"
 plan:
 - in_parallel:
   - get: #@ chart_resource_name(chart)
     passed:
-    - #@ passed
+    - #@ testflight_job_name(chart)
     trigger: true
   - { get: pipeline-tasks }
   - { get: galoy-deployments }
