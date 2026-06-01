@@ -1,0 +1,13 @@
+apiVersion: v2
+name: galoy-gitops
+description: Galoy GitOps control-plane dependencies
+type: application
+version: 0.1.0-dev
+appVersion: "0.1.0"
+dependencies:
+  - name: argo-cd
+    repository: https://argoproj.github.io/argo-helm
+    version: 9.5.17
+  - name: crossplane
+    repository: https://charts.crossplane.io/stable
+    version: 2.3.1
