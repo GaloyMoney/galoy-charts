@@ -75,3 +75,25 @@ via its `--upstreams` / `TUNNEL_UPSTREAMS` arg.
 {{- end -}}
 {{- join "," $parts -}}
 {{- end }}
+
+{{/*
+Create the ServiceAccount name for tunnel-connector.
+*/}}
+{{- define "galoy-deps.tunnelConnector.serviceAccountName" -}}
+{{- if .Values.tunnelConnector.serviceAccount.create }}
+{{- default "tunnel-connector" .Values.tunnelConnector.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.tunnelConnector.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{/*
+Render the DBHub image used by tunnelConnector.postgresMcp.
+*/}}
+{{- define "galoy-deps.tunnelConnector.postgresMcp.image" -}}
+{{- if .Values.tunnelConnector.postgresMcp.image.digest -}}
+{{ .Values.tunnelConnector.postgresMcp.image.repository }}@{{ .Values.tunnelConnector.postgresMcp.image.digest }}
+{{- else -}}
+{{ .Values.tunnelConnector.postgresMcp.image.repository }}:{{ .Values.tunnelConnector.postgresMcp.image.tag }}
+{{- end -}}
+{{- end }}
