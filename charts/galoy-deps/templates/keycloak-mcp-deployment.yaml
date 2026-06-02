@@ -1,0 +1,86 @@
+{{- if .Values.keycloakMcp.enabled -}}
+{{- if not .Values.keycloakMcp.keycloakBaseUrl }}
+{{- fail "keycloakMcp.keycloakBaseUrl is required when keycloakMcp.enabled=true" }}
+{{- end }}
+{{- if not .Values.keycloakMcp.existingSecret }}
+{{- fail "keycloakMcp.existingSecret is required when keycloakMcp.enabled=true" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-mcp
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "galoy-deps.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: keycloak-mcp
+  template:
+    metadata:
+      labels:
+        {{- include "galoy-deps.labels" . | nindent 8 }}
+        app.kubernetes.io/component: keycloak-mcp
+    spec:
+      containers:
+        - name: keycloak-mcp
+          {{- if .Values.keycloakMcp.image.digest }}
+          image: "{{ .Values.keycloakMcp.image.repository }}@{{ .Values.keycloakMcp.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.keycloakMcp.image.repository }}:{{ .Values.keycloakMcp.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.keycloakMcp.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: KEYCLOAK_BASE_URL
+              value: {{ .Values.keycloakMcp.keycloakBaseUrl | quote }}
+            {{- if .Values.keycloakMcp.tokenRealm }}
+            - name: KEYCLOAK_TOKEN_REALM
+              value: {{ .Values.keycloakMcp.tokenRealm | quote }}
+            {{- end }}
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.keycloakMcp.clientId | quote }}
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloakMcp.existingSecret }}
+                  key: {{ .Values.keycloakMcp.clientSecretKey }}
+            - name: KEYCLOAK_REALMS
+              value: {{ join "," .Values.keycloakMcp.realms | quote }}
+            - name: KEYCLOAK_MCP_BIND
+              value: "0.0.0.0:8000"
+            - name: KEYCLOAK_MCP_MOUNT
+              value: "/mcp"
+            {{- if .Values.keycloakMcp.declaredSnapshot }}
+            - name: KEYCLOAK_DECLARED_SNAPSHOT_FILE
+              value: /etc/keycloak-mcp/snapshot.json
+            {{- end }}
+            - name: RUST_LOG
+              value: "info"
+          {{- if .Values.keycloakMcp.declaredSnapshot }}
+          volumeMounts:
+            - name: declared-snapshot
+              mountPath: /etc/keycloak-mcp
+              readOnly: true
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            {{- toYaml .Values.keycloakMcp.resources | nindent 12 }}
+      {{- if .Values.keycloakMcp.declaredSnapshot }}
+      volumes:
+        - name: declared-snapshot
+          configMap:
+            name: keycloak-mcp-declared-snapshot
+      {{- end }}
+{{- end }}
