@@ -1,0 +1,68 @@
+{{- if .Values.tunnelConnector.enabled -}}
+{{- $needsServiceAccount := or .Values.tunnelConnector.postgresMcp.enabled .Values.tunnelConnector.serviceAccount.name -}}
+{{- if and .Values.tunnelConnector.serviceAccount.create $needsServiceAccount }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "galoy-deps.tunnelConnector.serviceAccountName" . }}
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tunnel-connector
+{{- end }}
+{{- if .Values.tunnelConnector.postgresMcp.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tunnel-connector-postgres-mcp
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tunnel-connector
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames:
+      - {{ .Values.tunnelConnector.postgresMcp.registrySecretName | quote }}
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames:
+      - {{ .Values.tunnelConnector.postgresMcp.configSecretName | quote }}
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["services"]
+    resourceNames:
+      - {{ .Values.tunnelConnector.postgresMcp.resourceName | quote }}
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames:
+      - {{ .Values.tunnelConnector.postgresMcp.resourceName | quote }}
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tunnel-connector-postgres-mcp
+  labels:
+    {{- include "galoy-deps.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tunnel-connector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tunnel-connector-postgres-mcp
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "galoy-deps.tunnelConnector.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- end }}

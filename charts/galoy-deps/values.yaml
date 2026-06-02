@@ -400,6 +400,39 @@ tunnelConnector:
   upstreams:
     - name: k8s
       url: http://kubernetes-mcp-server:8080/mcp
+  serviceAccount:
+    create: true
+    name: ""
+  postgresMcp:
+    enabled: false
+    # Defaults to the tunnel connector pod namespace when empty.
+    namespace: ""
+    # Lana writes this Secret. The connector only reads it.
+    registrySecretName: lana-postgres-mcp-registry
+    registryKey: registry.yaml
+    # Fixed generated aggregate DBHub resources owned by tunnel-connector.
+    resourceName: lana-postgres-mcp
+    configSecretName: lana-postgres-mcp-config
+    # Drua upstream name. Tool names become:
+    # <deployment>_lana_postgres_execute_sql_<instance>_<runtime|datawarehouse>
+    upstreamName: lana_postgres
+    image:
+      repository: bytebase/dbhub
+      tag: 0.21.1
+      digest: ""
+      pullPolicy: IfNotPresent
+    service:
+      port: 8000
+    queryTimeout: 30
+    maxRows: 1000
+    connectTimeoutSeconds: 5
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
   replicas: 1
   resources:
     requests:

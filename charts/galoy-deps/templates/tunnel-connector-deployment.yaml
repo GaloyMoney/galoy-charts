@@ -8,8 +8,8 @@
 {{- if not .Values.tunnelConnector.existingPrivateKeySecret }}
 {{- fail "tunnelConnector.existingPrivateKeySecret is required when tunnelConnector.enabled=true" }}
 {{- end }}
-{{- if not .Values.tunnelConnector.upstreams }}
-{{- fail "tunnelConnector.upstreams must list at least one {name, url} entry" }}
+{{- if and (not .Values.tunnelConnector.upstreams) (not .Values.tunnelConnector.postgresMcp.enabled) }}
+{{- fail "tunnelConnector.upstreams must list at least one {name, url} entry unless tunnelConnector.postgresMcp.enabled=true" }}
 {{- end }}
 apiVersion: apps/v1
 kind: Deployment
@@ -30,6 +30,9 @@ spec:
         {{- include "galoy-deps.labels" . | nindent 8 }}
         app.kubernetes.io/component: tunnel-connector
     spec:
+      {{- if or .Values.tunnelConnector.postgresMcp.enabled .Values.tunnelConnector.serviceAccount.name }}
+      serviceAccountName: {{ include "galoy-deps.tunnelConnector.serviceAccountName" . }}
+      {{- end }}
       containers:
         - name: connector
           {{- /*
@@ -52,6 +55,49 @@ spec:
               value: {{ include "galoy-deps.tunnelConnector.upstreamsEnv" . | quote }}
             - name: TUNNEL_PRIVATE_KEY_FILE
               value: /var/run/secrets/tunnel-connector/private_key.pem
+            {{- if .Values.tunnelConnector.postgresMcp.enabled }}
+            - name: TUNNEL_POSTGRES_MCP_ENABLED
+              value: "true"
+            {{- if .Values.tunnelConnector.postgresMcp.namespace }}
+            - name: TUNNEL_POSTGRES_MCP_NAMESPACE
+              value: {{ .Values.tunnelConnector.postgresMcp.namespace | quote }}
+            {{- else }}
+            - name: TUNNEL_POSTGRES_MCP_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- end }}
+            - name: TUNNEL_POSTGRES_MCP_REGISTRY_SECRET
+              value: {{ .Values.tunnelConnector.postgresMcp.registrySecretName | quote }}
+            - name: TUNNEL_POSTGRES_MCP_REGISTRY_KEY
+              value: {{ .Values.tunnelConnector.postgresMcp.registryKey | quote }}
+            - name: TUNNEL_POSTGRES_MCP_RESOURCE_NAME
+              value: {{ .Values.tunnelConnector.postgresMcp.resourceName | quote }}
+            - name: TUNNEL_POSTGRES_MCP_CONFIG_SECRET
+              value: {{ .Values.tunnelConnector.postgresMcp.configSecretName | quote }}
+            - name: TUNNEL_POSTGRES_MCP_UPSTREAM_NAME
+              value: {{ .Values.tunnelConnector.postgresMcp.upstreamName | quote }}
+            - name: TUNNEL_POSTGRES_MCP_IMAGE
+              value: {{ include "galoy-deps.tunnelConnector.postgresMcp.image" . | quote }}
+            - name: TUNNEL_POSTGRES_MCP_IMAGE_PULL_POLICY
+              value: {{ .Values.tunnelConnector.postgresMcp.image.pullPolicy | quote }}
+            - name: TUNNEL_POSTGRES_MCP_SERVICE_PORT
+              value: {{ .Values.tunnelConnector.postgresMcp.service.port | quote }}
+            - name: TUNNEL_POSTGRES_MCP_QUERY_TIMEOUT
+              value: {{ .Values.tunnelConnector.postgresMcp.queryTimeout | quote }}
+            - name: TUNNEL_POSTGRES_MCP_MAX_ROWS
+              value: {{ .Values.tunnelConnector.postgresMcp.maxRows | quote }}
+            - name: TUNNEL_POSTGRES_MCP_CONNECT_TIMEOUT_SECS
+              value: {{ .Values.tunnelConnector.postgresMcp.connectTimeoutSeconds | quote }}
+            - name: TUNNEL_POSTGRES_MCP_REQUEST_CPU
+              value: {{ .Values.tunnelConnector.postgresMcp.resources.requests.cpu | quote }}
+            - name: TUNNEL_POSTGRES_MCP_REQUEST_MEMORY
+              value: {{ .Values.tunnelConnector.postgresMcp.resources.requests.memory | quote }}
+            - name: TUNNEL_POSTGRES_MCP_LIMIT_CPU
+              value: {{ .Values.tunnelConnector.postgresMcp.resources.limits.cpu | quote }}
+            - name: TUNNEL_POSTGRES_MCP_LIMIT_MEMORY
+              value: {{ .Values.tunnelConnector.postgresMcp.resources.limits.memory | quote }}
+            {{- end }}
             - name: RUST_LOG
               value: "info"
           volumeMounts:
